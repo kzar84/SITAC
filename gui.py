@@ -5,7 +5,7 @@ import time
 
 gui = Tk()
 gui.title('SITAC')
-gui.minsize(1500,1000)
+gui.minsize(800,600)
 
 # Alarm Strings
 currentTime = ''
