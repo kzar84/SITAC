@@ -5,7 +5,7 @@ import time
 
 gui = Tk()
 gui.title('SITAC')
-gui.minsize(1500,1000)
+gui.minsize(800,600)
 
 # Alarm Strings
 currentTime = ''
@@ -38,9 +38,9 @@ def updateAlarmStatus():
     global alarmStatus, alarmStatusStr
 
     if (alarmStatus == False):
-        alarmStatus = 'Alarm: ON'
+        alarmStatusStr = 'Alarm: ON'
     else:
-        alarmStatus = 'Alarm: OFF'
+        alarmStatusStr = 'Alarm: OFF'
 
     alarmStatus = not alarmStatus
     statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
@@ -49,9 +49,9 @@ def updateBrewStatus(flip):
     global brewStatus, brewStatusStr
 
     if (brewStatus == False):
-        brewStatus =  'Brew:  ON'
+        brewStatusStr =  'Brew:  ON'
     else:
-        brewStatus =  'Brew:  OFF'
+        brewStatusStr =  'Brew:  OFF'
 
     brewStatus = not brewStatus    
     statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
@@ -60,9 +60,9 @@ def updateLightStatus():
     global lightStatus, lightStatusStr
 
     if (lightStatus == False):
-        lightStatus = 'Light: ON'
+        lightStatusStr = 'Light: ON'
     else:
-        lightStatus = 'Light: OFF'
+        lightStatusStr = 'Light: OFF'
 
     lightStatus = not lightStatus
     statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
