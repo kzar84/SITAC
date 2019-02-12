@@ -45,7 +45,7 @@ def updateAlarmStatus():
     alarmStatus = not alarmStatus
     statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
 
-def updateBrewStatus(flip):
+def updateBrewStatus():
     global brewStatus, brewStatusStr
 
     if (brewStatus == False):
