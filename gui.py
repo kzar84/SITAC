@@ -79,4 +79,4 @@ statusLabel = Label(gui,font=('times', 15, 'bold'),text=alarmStatusStr + '\n' + 
 statusLabel.pack()
 
 tick()
-gui.mainloop(  )
+gui.mainloop()
