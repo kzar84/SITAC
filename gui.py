@@ -9,7 +9,7 @@ class Clock:
         # Alarm Strings
         self.currentTime = ''
         self.nextTime = ''
-        self.nextAlarmTime = '22:56 pm'
+        self.nextAlarmTime = '07:00 am'
 
         # Status Strings
         self.alarmStatusStr = 'Alarm: OFF'
@@ -23,7 +23,6 @@ class Clock:
 
     # Fucntion that gets the current time every 200ms and updates appropriate label
     def tick(self, clockLabel):
-        # global currentTime
         # get the current local time from the PC
         self.nextTime = time.strftime('%H:%M pm')
         # if time string has changed, update it
@@ -70,25 +69,70 @@ class Clock:
         self.lightStatus = not self.lightStatus
         statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
+# gui classes used for multiple page gui
+class MainWindow(Tk):
+    def __init__(self, *args, **kwargs):
+        Tk.__init__(self, *args, **kwargs)
+        self.title('SITAC')
+        self.minsize(800,600)
 
-# Instantiate a clock
+        # container contains all the pages
+        container = Frame(self)
+        container.pack(side='top', fill='both', expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+        self.frames = {} # dictionary containing gui pages
+
+        # create in individual pages and store them in frames
+        for F in (ClockPage, SettingsPage):
+            frame = F(container,self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky='nsew')
+        
+        self.show_frame(ClockPage)
+
+    def show_frame(self, name):
+        frame = self.frames[name]
+        frame.tkraise()
+
+class ClockPage(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        # add page stuff
+        # Set up various labels for display
+        self.clockLabel = Label(self, font=('times', 30, 'bold'))
+        self.clockLabel.pack()
+
+        self.nextAlarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.nextAlarmTime)
+        self.nextAlarmLabel.pack()
+
+        self.statusLabel = Label(self,font=('times', 15, 'bold'),text=clock.alarmStatusStr + '\n' + clock.brewStatusStr + '\n' + clock.lightStatusStr)
+        self.statusLabel.pack()
+
+        menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
+        menuButton.pack()
+
+class SettingsPage(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        # add page stuff
+        # Set up various labels for display
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Alarm: 07:00 am')
+        self.alarmLabel.pack()
+
+        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: 15')
+        self.volumeLabel.pack()
+
+        self.toneLabel = Label(self,font=('times', 15, 'bold'),text='Piano')
+        self.toneLabel.pack()
+
+        homeButton = Button(self, text='Home', command=lambda: controller.show_frame(ClockPage))
+        homeButton.pack()
+
+
+# Instantiate a clock and start ticking
+# Instantiate a gui and start it up
 clock = Clock()
-
-# Set up the gui
-gui = Tk()
-gui.title('SITAC')
-gui.minsize(800,600)
-
-# Set up various labels for display
-clockLabel = Label(gui, font=('times', 30, 'bold'))
-clockLabel.pack()
-
-nextAlarmLabel = Label(gui, font=('times', 15, 'bold'), text = 'Next alarm: ' + clock.nextAlarmTime)
-nextAlarmLabel.pack()
-
-statusLabel = Label(gui,font=('times', 15, 'bold'),text=clock.alarmStatusStr + '\n' + clock.brewStatusStr + '\n' + clock.lightStatusStr)
-statusLabel.pack()
-
-
-clock.tick(clockLabel)
+gui = MainWindow()
+clock.tick(gui.frames[ClockPage].clockLabel)
 gui.mainloop()
