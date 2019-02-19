@@ -37,7 +37,6 @@ class Clock:
         # recall function after 200 miliseconds
         clockLabel.after(200, self.tick, clockLabel)
 
-
     # Callback functions for updating gui status strings
     def updateAlarmStatus(self, statusLabel):
         if (self.alarmStatus == False):
