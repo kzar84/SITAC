@@ -9,7 +9,7 @@ class Clock:
         # Alarm Strings
         self.currentTime = ''
         self.nextTime = ''
-        self.nextAlarmTime = '07:00 am'
+        self.nextAlarmTime = '7:00 am'
 
         # Status Strings
         self.alarmStatusStr = 'Alarm: OFF'
@@ -24,7 +24,7 @@ class Clock:
     # Fucntion that gets the current time every 200ms and updates appropriate label
     def tick(self, clockLabel):
         # get the current local time from the PC
-        self.nextTime = time.strftime('%H:%M pm')
+        self.nextTime = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
         # if time string has changed, update it
         if self.nextTime != self.currentTime:
             self.currentTime = self.nextTime
@@ -33,13 +33,10 @@ class Clock:
         # check to see if an alarm is ready
         if (self.alarmStatus and self.currentTime == self.nextAlarmTime):
             self.alarm(clockLabel)
-
+        
+        # recall function after 200 miliseconds
         clockLabel.after(200, self.tick, clockLabel)
 
-    # Function that gets called when the alarm sounds
-    def alarm(self, clockLabel):
-        #sound the alarm
-        clockLabel.config(text = 'ALARM')
 
     # Callback functions for updating gui status strings
     def updateAlarmStatus(self, statusLabel):
@@ -69,7 +66,19 @@ class Clock:
         self.lightStatus = not self.lightStatus
         statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
-# gui classes used for multiple page gui
+    # Sounds the alarm
+    def alarm(self, clockLabel):
+        print('Alarm')
+    
+    # Toggles coffee brewing
+    def brew(self):
+        print('starts brewing')
+
+    # Toggles lights
+    def lights(self):
+        print('turning on the lights')
+
+# Controller class for gui
 class MainWindow(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
@@ -95,6 +104,7 @@ class MainWindow(Tk):
         frame = self.frames[name]
         frame.tkraise()
 
+# gui homepage
 class ClockPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
@@ -112,12 +122,13 @@ class ClockPage(Frame):
         menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
         menuButton.pack()
 
+# settings page of the gui
 class SettingsPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
         # add page stuff
         # Set up various labels for display
-        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Alarm: 07:00 am')
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Alarm: 7:00 am')
         self.alarmLabel.pack()
 
         self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: 15')
