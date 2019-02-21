@@ -2,6 +2,7 @@
 
 from tkinter import *
 import time
+import subprocess
 
 # Class that handles clock functionality
 class Clock:
@@ -20,6 +21,9 @@ class Clock:
         self.alarmStatus = True
         self.brewStatus =  False
         self.lightStatus = False
+
+        # Alarm_tone
+        self.alarmTone = 'Loud_Alarm_Clock_Buzzer.wav'
 
     # Fucntion that gets the current time every 200ms and updates appropriate label
     def tick(self, clockLabel):
@@ -68,6 +72,8 @@ class Clock:
     # Sounds the alarm
     def alarm(self, clockLabel):
         print('Alarm')
+        # bash command that opens and plays the current alarm tone
+        subprocess.Popen('oxmplayer /alarm_tones/' + self.alarmTone)
     
     # Toggles coffee brewing
     def brew(self):
@@ -82,7 +88,7 @@ class MainWindow(Tk):
     def __init__(self, *args, **kwargs):
         Tk.__init__(self, *args, **kwargs)
         self.title('SITAC')
-        self.minsize(800,600)
+        self.minsize(800,480)
 
         # container contains all the pages
         container = Frame(self)
