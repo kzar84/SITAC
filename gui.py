@@ -2,81 +2,153 @@
 
 from tkinter import *
 import time
+import subprocess
 
-gui = Tk()
-gui.title('SITAC')
-gui.minsize(800,600)
+# Class that handles clock functionality
+class Clock:
+    def __init__(self): 
+        # Alarm Strings
+        self.currentTime = ''
+        self.nextTime = ''
+        self.nextAlarmTime = '7:00 am'
 
-# Alarm Strings
-currentTime = ''
-nextAlarmTime = 'Next alarm: 07:00 am'
+        # Status Strings
+        self.alarmStatusStr = 'Alarm: OFF'
+        self.brewStatusStr =  'Brew:  OFF'
+        self.lightStatusStr = 'Light: OFF'
 
-# Status Strings
-alarmStatusStr = 'Alarm: OFF'
-brewStatusStr =  'Brew:  OFF'
-lightStatusStr = 'Light: OFF'
+        # Status Booleans (init all false)
+        self.alarmStatus = True
+        self.brewStatus =  False
+        self.lightStatus = False
 
-# Status Booleans (init all false)
-alarmStatus = False
-brewStatus =  False
-lightStatus = False
+        # Alarm_tone
+        self.alarmTone = 'Loud_Alarm_Clock_Buzzer.wav'
 
-# Fucntion that gets the current time every 200ms and updates appropriate label
-def tick():
-    global currentTime
-    # get the current local time from the PC
-    nextTime = time.strftime('%H:%M pm')
-    # if time string has changed, update it
-    if nextTime != currentTime:
-        currentTime = nextTime
-        clockLabel.config(text=nextTime)
+    # Fucntion that gets the current time every 200ms and updates appropriate label
+    def tick(self, clockLabel):
+        # get the current local time from the PC
+        self.nextTime = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
+        # if time string has changed, update it
+        if self.nextTime != self.currentTime:
+            self.currentTime = self.nextTime
+            clockLabel.config(text=self.nextTime)
+        
+        # check to see if an alarm is ready
+        if (self.alarmStatus and self.currentTime == self.nextAlarmTime):
+            self.alarm(clockLabel)
+        
+        # recall function after 200 miliseconds
+        clockLabel.after(200, self.tick, clockLabel)
 
-    clockLabel.after(200, tick)
+    # Callback functions for updating gui status strings
+    def updateAlarmStatus(self, statusLabel):
+        if (self.alarmStatus):
+            self.alarmStatusStr = 'Alarm: OFF'
+        else:
+            self.alarmStatusStr = 'Alarm: ON'
 
-# Callback functions for updating gui status strings
-def updateAlarmStatus():
-    global alarmStatus, alarmStatusStr
+        self.alarmStatus = not self.alarmStatus
+        statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
-    if (alarmStatus == False):
-        alarmStatusStr = 'Alarm: ON'
-    else:
-        alarmStatusStr = 'Alarm: OFF'
+    def updateBrewStatus(self, statusLabel):
+        if (self.brewStatus):
+            self.brewStatusStr =  'Brew:  OFF'
+        else:
+            self.brewStatusStr =  'Brew:  ON'
 
-    alarmStatus = not alarmStatus
-    statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
+        self.brewStatus = not self.brewStatus    
+        statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
-def updateBrewStatus():
-    global brewStatus, brewStatusStr
+    def updateLightStatus(self, statusLabel):
+        if (self.lightStatus):
+            self.lightStatusStr = 'Light: OFF'
+        else:
+            self.lightStatusStr = 'Light: ON'
 
-    if (brewStatus == False):
-        brewStatusStr =  'Brew:  ON'
-    else:
-        brewStatusStr =  'Brew:  OFF'
+        self.lightStatus = not self.lightStatus
+        statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
-    brewStatus = not brewStatus    
-    statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
+    # Sounds the alarm
+    def alarm(self, clockLabel):
+        # bash command that opens and plays the current alarm tone
+        subprocess.Popen('oxmplayer /alarm_tones/' + self.alarmTone)
+        print('Alarm')
+    
+    # Toggles coffee brewing
+    def brew(self):
+        print('starts brewing')
 
-def updateLightStatus():
-    global lightStatus, lightStatusStr
+    # Toggles lights
+    def lights(self):
+        print('turning on the lights')
 
-    if (lightStatus == False):
-        lightStatusStr = 'Light: ON'
-    else:
-        lightStatusStr = 'Light: OFF'
+# Controller class for gui
+class MainWindow(Tk):
+    def __init__(self, *args, **kwargs):
+        Tk.__init__(self, *args, **kwargs)
+        self.title('SITAC')
+        self.minsize(800,480)
 
-    lightStatus = not lightStatus
-    statusLabel.config(text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
+        # container contains all the pages
+        container = Frame(self)
+        container.pack(side='top', fill='both', expand=True)
+        container.grid_rowconfigure(0, weight=1)
+        container.grid_columnconfigure(0, weight=1)
+        self.frames = {} # dictionary containing gui pages
+
+        # create in individual pages and store them in frames
+        for F in (ClockPage, SettingsPage):
+            frame = F(container,self)
+            self.frames[F] = frame
+            frame.grid(row=0, column=0, sticky='nsew')
+        
+        self.show_frame(ClockPage)
+
+    def show_frame(self, name):
+        frame = self.frames[name]
+        frame.tkraise()
+
+# gui homepage
+class ClockPage(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        # add page stuff
+        # Set up various labels for display
+        self.clockLabel = Label(self, font=('times', 30, 'bold'))
+        self.clockLabel.pack()
+
+        self.nextAlarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.nextAlarmTime)
+        self.nextAlarmLabel.pack()
+
+        self.statusLabel = Label(self,font=('times', 15, 'bold'),text=clock.alarmStatusStr + '\n' + clock.brewStatusStr + '\n' + clock.lightStatusStr)
+        self.statusLabel.pack()
+
+        menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
+        menuButton.pack()
+
+# settings page of the gui
+class SettingsPage(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        # add page stuff
+        # Set up various labels for display
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Alarm: 7:00 am')
+        self.alarmLabel.pack()
+
+        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: 15')
+        self.volumeLabel.pack()
+
+        self.toneLabel = Label(self,font=('times', 15, 'bold'),text='Piano')
+        self.toneLabel.pack()
+
+        homeButton = Button(self, text='Home', command=lambda: controller.show_frame(ClockPage))
+        homeButton.pack()
 
 
-# Set up various labels for display
-clockLabel = Label(gui, font=('times', 30, 'bold'))
-clockLabel.pack()
-
-nextAlarmLabel = Label(gui, font=('times', 15, 'bold'), text = nextAlarmTime)
-nextAlarmLabel.pack()
-
-statusLabel = Label(gui,font=('times', 15, 'bold'),text=alarmStatusStr + '\n' + brewStatusStr + '\n' + lightStatusStr)
-statusLabel.pack()
-
-tick()
+# Instantiate a clock and start ticking
+# Instantiate a gui and start it up
+clock = Clock()
+gui = MainWindow()
+clock.tick(gui.frames[ClockPage].clockLabel)
 gui.mainloop()
