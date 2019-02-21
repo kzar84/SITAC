@@ -43,37 +43,37 @@ class Clock:
 
     # Callback functions for updating gui status strings
     def updateAlarmStatus(self, statusLabel):
-        if (self.alarmStatus == False):
-            self.alarmStatusStr = 'Alarm: ON'
-        else:
+        if (self.alarmStatus):
             self.alarmStatusStr = 'Alarm: OFF'
+        else:
+            self.alarmStatusStr = 'Alarm: ON'
 
         self.alarmStatus = not self.alarmStatus
         statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
     def updateBrewStatus(self, statusLabel):
-        if (self.brewStatus == False):
-            self.brewStatusStr =  'Brew:  ON'
-        else:
+        if (self.brewStatus):
             self.brewStatusStr =  'Brew:  OFF'
+        else:
+            self.brewStatusStr =  'Brew:  ON'
 
         self.brewStatus = not self.brewStatus    
         statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
     def updateLightStatus(self, statusLabel):
-        if (self.lightStatus == False):
-            self.lightStatusStr = 'Light: ON'
-        else:
+        if (self.lightStatus):
             self.lightStatusStr = 'Light: OFF'
+        else:
+            self.lightStatusStr = 'Light: ON'
 
         self.lightStatus = not self.lightStatus
         statusLabel.config(text=self.alarmStatusStr + '\n' + self.brewStatusStr + '\n' + self.lightStatusStr)
 
     # Sounds the alarm
     def alarm(self, clockLabel):
-        print('Alarm')
         # bash command that opens and plays the current alarm tone
         subprocess.Popen('oxmplayer /alarm_tones/' + self.alarmTone)
+        print('Alarm')
     
     # Toggles coffee brewing
     def brew(self):
