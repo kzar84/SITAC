@@ -10,21 +10,25 @@ class Clock:
         # Alarm Strings
         self.current_time = ''
         self.next_time = ''
-        self.next_alarm_time = '7:00 am'
+        self.next_alarm_time = '7:00 PM'
 
         # Status Strings
-        self.alarm_status_str = 'Alarm: OFF'
-        self.brew_status_str =  'Brew:  OFF'
-        self.lights_status_str = 'Light: OFF'
+        self.alarm_set_str =  'Alarm: OFF'
+        self.brew_set_str =   'Brew:  OFF'
+        self.lights_set_str = 'Light: OFF'
 
         # Status Booleans
-        self.alarm_status = True
-        self.alarm_on = False
-        self.brew_status =  False
-        self.lights_status = False
+        self.alarm_set =  True
+        self.alarm_on =      False
+        self.brew_set =   False
+        self.lights_set = False
 
-        # Alarm_tone
-        self.alarmTone = 'Loud_Alarm_Clock_Buzzer.wav'
+        # Alarm_tone list and current indext
+        self.alarm_tones = ['buzzer.wav']
+        self.alarm_tone = 0
+
+        # Volume (0-50)
+        self.volume = 25
 
     # Fucntion that gets the current time every 200ms and updates appropriate label
     def tick(self, clockLabel):
@@ -36,53 +40,66 @@ class Clock:
             clockLabel.config(text=self.next_time)
         
         # check to see if an alarm is ready (add better logic here)
-        if (self.alarm_status and self.current_time == self.next_alarm_time):
+        if (self.current_time == self.next_alarm_time and self.alarm_set and not self.alarm):
+            self.alarm_on = True  
             self.alarm()
         
         # recall function after 200 miliseconds
         clockLabel.after(200, self.tick, clockLabel)
 
     # Callback functions for updating gui status strings
-    def update_alarm_status(self, statusLabel):
-        if (self.alarm_status):
-            self.alarm_status_str = 'Alarm: OFF'
+    def update_alarm_set(self, statusLabel):
+        if (self.alarm_set):
+            self.alarm_set_str = 'Alarm: OFF'
         else:
-            self.alarm_status_str = 'Alarm: ON'
+            self.alarm_set_str = 'Alarm: ON'
 
-        self.alarm_status = not self.alarm_status
-        statusLabel.config(text=self.alarm_status_str + '\n' + self.brew_status_str + '\n' + self.lights_status_str)
+        self.alarm_set= not self.alarm_set
+        statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
-    def update_brew_status(self, statusLabel):
-        if (self.brew_status):
-            self.brew_status_str =  'Brew:  OFF'
+    def update_brew_set(self, statusLabel):
+        if (self.brew_set):
+            self.brew_set_str =  'Brew:  OFF'
         else:
-            self.brew_status_str =  'Brew:  ON'
+            self.brew_set_str =  'Brew:  ON'
 
-        self.brew_status = not self.brew_status    
-        statusLabel.config(text=self.alarm_status_str + '\n' + self.brew_status_str + '\n' + self.lights_status_str)
+        self.brew_set = not self.brew_set    
+        statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
-    def update_lights_status(self, statusLabel):
-        if (self.lights_status):
-            self.lights_status_str = 'Light: OFF'
+    def update_lights_set(self, statusLabel):
+        if (self.lights_set): 
+            self.lights_set_str = 'Light: OFF'
         else:
-            self.lights_status_str = 'Light: ON'
+            self.lights_set_str = 'Light: ON'
 
-        self.lights_status = not self.lights_status
-        statusLabel.config(text=self.alarm_status_str + '\n' + self.brew_status_str + '\n' + self.lights_status_str)
+        self.lights_set = not self.lights_set
+        statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
     # Sounds the alarm
     def alarm(self):
-        # bash command that opens and plays the current alarm tone
-        subprocess.Popen('oxmplayer alarm_tones/' + self.alarmTone)
+        # subprocess.call(bash command, shell=True)
+        subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone], shell=True)
+        self.alarm_on = False 
         print('Alarm')
+
     
+    # NOT IMPLEMENTED
     # Toggles coffee brewing
     def brew(self):
         print('starts brewing')
 
+    # NOT IMPLEMENTED
     # Toggles lights
     def lights(self):
         print('turning on the lights')
+
+    # NOT TESTED
+    # Change the volume
+    def set_volume(self, level):
+        # subprocess.call(bash command, shell=True)
+        # NOT TESTED
+        subprocess.call('amixer set PCM -- ' + ((level/25)*100) + '%', shell=True)
+        print('setting volume')
 
 # Controller class for gui
 class MainWindow(Tk):
@@ -122,7 +139,8 @@ class ClockPage(Frame):
         self.nextAlarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.next_alarm_time)
         self.nextAlarmLabel.pack()
 
-        self.statusLabel = Label(self,font=('times', 15, 'bold'),text=clock.alarm_status_str + '\n' + clock.brew_status_str + '\n' + clock.lights_status_str)
+        self.statusLabel = Label(self,font=('times', 15, 'bold'),text=clock.alarm_set_str +
+            '\n' + clock.brew_set_str + '\n' + clock.lights_set_str)
         self.statusLabel.pack()
 
         menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
@@ -134,13 +152,13 @@ class SettingsPage(Frame):
         Frame.__init__(self, parent)
         # add page stuff
         # Set up various labels for display
-        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Alarm: 7:00 am')
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.next_alarm_time)
         self.alarmLabel.pack()
 
-        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: 15')
+        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: ' + str(clock.volume))
         self.volumeLabel.pack()
 
-        self.toneLabel = Label(self,font=('times', 15, 'bold'),text='Piano')
+        self.toneLabel = Label(self,font=('times', 15, 'bold'),text='Alarm tone: ' + clock.alarm_tones[clock.alarm_tone])
         self.toneLabel.pack()
 
         homeButton = Button(self, text='Home', command=lambda: controller.show_frame(ClockPage))
