@@ -1,0 +1,3 @@
+Sudo apt-get update
+Sudo apt-get upgrade
+Sudo apt-get install python-tk

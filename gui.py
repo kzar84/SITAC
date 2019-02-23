@@ -18,8 +18,8 @@ class Clock:
         self.lights_set_str = 'Light: OFF'
 
         # Status Booleans
-        self.alarm_set =  True
-        self.alarm_on =      False
+        self.alarm_on =   False
+        self.alarm_set =  True      # set true for testing purposes
         self.brew_set =   False
         self.lights_set = False
 
@@ -40,7 +40,7 @@ class Clock:
             clockLabel.config(text=self.next_time)
         
         # check to see if an alarm is ready (add better logic here)
-        if (self.current_time == self.next_alarm_time and self.alarm_set and not self.alarm):
+        if ((self.current_time == self.next_alarm_time) and self.alarm_set and not self.alarm_on):
             self.alarm_on = True  
             self.alarm()
         
