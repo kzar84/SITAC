@@ -43,12 +43,12 @@ class Clock:
             self.current_time = self.next_time
             gui.frames[ClockPage].clockLabel.config(text=self.next_time)
         
-        # check to see if an alarm is ready (add better logic here)
+        # check to see if an alarm is ready
         if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on): 
             self.alarm(gui)
         
         # check to see if in snoozing state
-        if ((self.current_time == self.snooze_time) and self.snoozing and not self.alarm_on):
+        if ((self.current_time == self.snooze_time) and self.snoozing):
             self.alarm(gui)
         
         # recall function after 500 miliseconds
