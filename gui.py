@@ -12,19 +12,19 @@ class Clock:
         self.next_time = ''
 
         # Status Strings
-        self.alarm_set_str =  'Alarm: OFF'
+        self.alarm_set_str =  'Alarm: ON'
         self.brew_set_str =   'Brew:  OFF'
         self.lights_set_str = 'Light: OFF'
 
         # Status Booleans
         self.alarm_on =   False
-        self.alarm_set =  True      # set true for testing purposes
+        self.alarm_set =  True     # set true for testing purposes
         self.snoozing =   False
         self.brew_set =   False
         self.lights_set = False
 
         # alarm tones list/alarm times list (initial index = 0)
-        self.alarm_times = ['7:00 AM', '8:00 AM', 'add_more_alarms_here']
+        self.alarm_times = ['5:36 PM', '8:00 AM', 'add_more_alarms_here']
         self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
         self.next_alarm_time = 0
         self.alarm_tone = 0
@@ -43,8 +43,8 @@ class Clock:
             self.current_time = self.next_time
             gui.frames[ClockPage].clockLabel.config(text=self.next_time)
         
-        # check to see if an alarm is ready
-        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on): 
+        # check to see if an alarm is ready and self.alarm_set and not self.alarm_on
+        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set): 
             self.alarm(gui)
         
         # check to see if in snoozing state
@@ -52,7 +52,7 @@ class Clock:
             self.alarm(gui)
         
         # recall function after 500 miliseconds
-        gui.after(500, self.tick, gui)
+        gui.after(200, self.tick, gui)
 
     # Callback functions for updating gui status strings
     def set_alarm(self, time, statusLabel):
@@ -218,10 +218,10 @@ class AlarmPage(Frame):
         self.wakeUpLabel = Label(self, font=('times', 30, 'bold'), text='Rise and Shine')
         self.wakeUpLabel.pack()
 
-        snoozeButton = Button(self, text='Snooze', command=clock.snooze(controller))
+        snoozeButton = Button(self, text='Snooze', command=lambda: clock.snooze(controller))
         snoozeButton.pack()
 
-        offButton = Button(self, text='Alarm off', command= clock.alarm_off(controller))
+        offButton = Button(self, text='Alarm off', command=lambda: clock.alarm_off(controller))
         offButton.pack()
 
 # Instantiate a clock and start ticking
