@@ -36,7 +36,7 @@ class Clock:
     # Fucntion that gets the current time every 500ms and updates appropriate label
     def tick(self, gui):
         # get the current local time from the PC
-        self.next_time = time.strftime('%#I:%M: %p') # %#I use if for windows, change to %-I when running on linux
+        self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
         
         # if time string has changed, update it
         if self.next_time != self.current_time:
@@ -44,7 +44,7 @@ class Clock:
             gui.frames[ClockPage].clockLabel.config(text=self.next_time)
         
         # check to see if an alarm is ready (add better logic here)
-        if ((self.current_time == self.next_alarm_time) and self.alarm_set and not self.alarm_on): 
+        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on): 
             self.alarm(gui)
         
         # check to see if in snoozing state
