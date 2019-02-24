@@ -218,10 +218,10 @@ class AlarmPage(Frame):
         self.wakeUpLabel = Label(self, font=('times', 30, 'bold'), text='Rise and Shine')
         self.wakeUpLabel.pack()
 
-        snoozeButton = Button(self, text='Snooze', command=clock.snooze)
+        snoozeButton = Button(self, text='Snooze', command=clock.snooze(controller))
         snoozeButton.pack()
 
-        offButton = Button(self, text='Alarm off', command= clock.alarm_off)
+        offButton = Button(self, text='Alarm off', command= clock.alarm_off(controller))
         offButton.pack()
 
 # Instantiate a clock and start ticking
