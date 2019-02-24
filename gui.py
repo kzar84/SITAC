@@ -7,11 +7,9 @@ import subprocess
 # Class that handles clock functionality
 class Clock:
     def __init__(self): 
-        # Alarm Strings
+        # Time strings
         self.current_time = ''
         self.next_time = ''
-        self.next_alarm_time = '4:10 PM'
-        self.snooze_time = ''
 
         # Status Strings
         self.alarm_set_str =  'Alarm: OFF'
@@ -25,9 +23,12 @@ class Clock:
         self.brew_set =   False
         self.lights_set = False
 
-        # Alarm_tone list and current indext
+        # alarm tones list/alarm times list (initial index = 0)
+        self.alarm_times = ['7:00 AM', '8:00 AM', 'add_more_alarms_here']
         self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
+        self.next_alarm_time = 0
         self.alarm_tone = 0
+        self.snooze_time = self.alarm_times[self.next_alarm_time]
 
         # Volume (0-50)
         self.volume = 25
@@ -36,6 +37,7 @@ class Clock:
     def tick(self, gui):
         # get the current local time from the PC
         self.next_time = time.strftime('%#I:%M: %p') # %#I use if for windows, change to %-I when running on linux
+        
         # if time string has changed, update it
         if self.next_time != self.current_time:
             self.current_time = self.next_time
@@ -44,10 +46,12 @@ class Clock:
         # check to see if an alarm is ready (add better logic here)
         if ((self.current_time == self.next_alarm_time) and self.alarm_set and not self.alarm_on): 
             self.alarm(gui)
+        
         # check to see if in snoozing state
-        if (self.snoozing and (self.current_time == self.snooze_time) and not self.alarm_on):
+        if ((self.current_time == self.snooze_time) and self.snoozing and not self.alarm_on):
             self.alarm(gui)
-        # recall function after 200 miliseconds
+        
+        # recall function after 500 miliseconds
         gui.after(500, self.tick, gui)
 
     # Callback functions for updating gui status strings
@@ -177,7 +181,7 @@ class ClockPage(Frame):
         self.clockLabel = Label(self, font=('times', 30, 'bold'))
         self.clockLabel.pack()
 
-        self.nextAlarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.next_alarm_time)
+        self.nextAlarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.alarm_times[clock.next_alarm_time])
         self.nextAlarmLabel.pack()
 
         self.statusLabel = Label(self,font=('times', 15, 'bold'),text=clock.alarm_set_str +
@@ -193,7 +197,7 @@ class SettingsPage(Frame):
         Frame.__init__(self, parent)
         # add page stuff
         # Set up various labels for display
-        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.next_alarm_time)
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.alarm_times[clock.next_alarm_time])
         self.alarmLabel.pack()
 
         self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: ' + str(clock.volume))
