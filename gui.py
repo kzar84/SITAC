@@ -93,7 +93,7 @@ class Clock:
     def alarm(self, gui):
         # turn on alarm_on bool, show the alarm page, and play selected alarm tone'
         self.alarm_on = True
-        gui.show_frame(gui.frames[AlarmPage])
+        gui.show_frame(AlarmPage)
         subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone] + ' &', shell=True)
             
     # implements snooze functionality
@@ -102,7 +102,7 @@ class Clock:
         # can add support for customizable snooze ammounts
         self.snooze_time = self.add_minutes(self.snooze_time, 10)
         self.snoozing = True
-        gui.show_frame(gui.frames[ClockPage])     
+        gui.show_frame(ClockPage)     
 
     # turn off the alarm
     def alarm_off(self, gui):
@@ -111,7 +111,7 @@ class Clock:
         self.alarm_on = False
         self.snoozing = False
         subprocess.call('kill %1', shell=True)
-        gui.show_frame(gui.frames[ClockPage])
+        gui.show_frame(ClockPage)
 
     # NOT IMPLEMENTED
     # Toggles coffee brewing
