@@ -24,11 +24,11 @@ class Clock:
         self.lights_set = False
 
         # alarm tones list/alarm times list (initial index = 0)
-        self.alarm_times = ['5:36 PM', '8:00 AM', 'add_more_alarms_here']
+        self.alarm_times = ['9:38 PM', '8:00 AM', 'add_more_alarms_here']
         self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
         self.next_alarm_time = 0
         self.alarm_tone = 0
-        self.snooze_time = self.alarm_times[self.next_alarm_time]
+        self.snooze_time = ''
 
         # Volume (0-50)
         self.volume = 25
@@ -43,8 +43,8 @@ class Clock:
             self.current_time = self.next_time
             gui.frames[ClockPage].clockLabel.config(text=self.next_time)
         
-        # check to see if an alarm is ready and self.alarm_set and not self.alarm_on
-        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set): 
+        # check to see if an alarm is ready
+        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on): 
             self.alarm(gui)
         
         # check to see if in snoozing state
@@ -55,35 +55,35 @@ class Clock:
         gui.after(200, self.tick, gui)
 
     # Callback functions for updating gui status strings
-    def set_alarm(self, time, statusLabel):
-        # togle the alarm bool
-        self.alarm_set= not self.alarm_set
+    def set_alarm(self, time, gui):
         # set new status string, alarm time, and snooze time
+        self.alarm_set_str = 'Alarm: ON'
+        self.next_alarm_time = time
+        self.snooze_time = time          
+        self.update_alarm_set(gui)
+
+    def update_alarm_set(self, gui):
         if (self.alarm_set):
             self.alarm_set_str = 'Alarm: ON'
-            self.next_alarm_time = time
-            self.snooze_time = time
         else:
-            self.alarm_set_str = 'Alarm: OFF'            
+            self.alarm_set_str = 'Alarm: OFF'
 
-        statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
+        gui.frames[ClockPage].statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
     def update_brew_set(self, statusLabel):
         if (self.brew_set):
-            self.brew_set_str =  'Brew:  OFF'
+            self.brew_set_str =  'Brew:   ON'
         else:
-            self.brew_set_str =  'Brew:  ON'
+            self.brew_set_str =  'Brew:   OFF'
 
-        self.brew_set = not self.brew_set    
         statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
     def update_lights_set(self, statusLabel):
         if (self.lights_set): 
-            self.lights_set_str = 'Light: OFF'
+            self.lights_set_str = 'Light:  ON'
         else:
-            self.lights_set_str = 'Light: ON'
+            self.lights_set_str = 'Light:  OFF'
 
-        self.lights_set = not self.lights_set
         statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
     # subprocess is used in below functions for exectuing terminal commands in linux
@@ -98,11 +98,12 @@ class Clock:
             
     # implements snooze functionality
     def snooze(self, gui):
-        # add ten minutes to the snooze time and wait for that
         # can add support for customizable snooze ammounts
-        self.snooze_time = self.add_minutes(self.snooze_time, 10)
+        subprocess.call('kill %1', shell=True)
+        self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
+        gui.frames[SnoozePage].snoozeLabel.config(text='Snoozing until ' + self.snooze_time)
         self.snoozing = True
-        gui.show_frame(ClockPage)     
+        gui.show_frame(SnoozePage)     
 
     # turn off the alarm
     def alarm_off(self, gui):
@@ -110,6 +111,7 @@ class Clock:
         self.alarm_set = False
         self.alarm_on = False
         self.snoozing = False
+        self.update_alarm_set(gui)
         subprocess.call('kill %1', shell=True)
         gui.show_frame(ClockPage)
 
@@ -132,19 +134,43 @@ class Clock:
         print('setting volume')
 
     # add minutes to a specified time
-    def add_minutes(self, time, minutes):
-        if (len(time) > 7):
-            new_minutes = int(self.snooze_time[4:5]) + minutes
-            if (new_minutes > 60):
+    # 7:00 AM vs 07:00 AM
+    def add_minutes(self, stime, minutes):
+        if (len(stime) > 7):
+            new_minutes = int(stime[3:5]) + minutes
+            new_hour = int(stime[0:2])
+            new_m = stime[5:8]
+            # if the hour rolls over, update minutes, hour, and am/pm if necessary
+            if (new_minutes >= 60):
                 new_minutes -= 60
-            time = time[0:2] + str(new_minutes) + time[5:7]
+                new_hour += 1
+                if (new_hour > 12):
+                    new_hour -= 12
+                    if (new_m == ' PM'):
+                        new_m = ' AM'
+                    else:
+                        new_m = ' PM'
         else:
-            new_minutes = int(self.snooze_time[2:3]) + minutes
-            if (new_minutes > 60):
+            new_minutes = int(stime[2:4]) + minutes
+            new_hour = int(stime[0:1])
+            new_m = stime[4:7]
+            # if the hour rolls over, update minutes, hour, and am/pm if necessary
+            if (new_minutes >= 60):
                 new_minutes -= 60
-
-        time = time[0:1] + str(new_minutes) + time[4:6]
-        return time
+                new_hour += 1
+                if (new_hour > 12):
+                    new_hour -= 12
+                    if (new_m == ' PM'):
+                        new_m = ' AM'
+                    else:
+                        new_m = ' PM'
+            
+        if (new_minutes > 10):
+            stime = str(new_hour) + ':' + str(new_minutes) + new_m
+        else:
+            stime = str(new_hour) + ':0' + str(new_minutes) + new_m
+        print(stime)
+        return stime
 
 # Controller class for gui
 class MainWindow(Tk):
@@ -161,7 +187,7 @@ class MainWindow(Tk):
         self.frames = {} # dictionary containing gui pages
 
         # create in individual pages and store them in frames
-        for F in (ClockPage, SettingsPage, AlarmPage):
+        for F in (ClockPage, SettingsPage, AlarmPage, SnoozePage):
             frame = F(container,self)
             self.frames[F] = frame
             frame.grid(row=0, column=0, sticky='nsew')
@@ -213,8 +239,8 @@ class SettingsPage(Frame):
 class AlarmPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        # # add page stuff
-        # # Set up various labels for display
+        # add page stuff
+        # Set up various labels for display
         self.wakeUpLabel = Label(self, font=('times', 30, 'bold'), text='Rise and Shine')
         self.wakeUpLabel.pack()
 
@@ -223,6 +249,21 @@ class AlarmPage(Frame):
 
         offButton = Button(self, text='Alarm off', command=lambda: clock.alarm_off(controller))
         offButton.pack()
+
+# Add snoozing page (snoozing until: , with menu button)
+class SnoozePage(Frame):
+    def __init__(self, parent, controller):
+        Frame.__init__(self, parent)
+        # add page stuff
+        # Set up various labels for display
+        self.clockLabel = Label(self, font=('times', 30, 'bold'), text=clock.current_time)
+        self.clockLabel.pack()
+        
+        self.snoozeLabel = Label(self, font=('times', 30, 'bold'))
+        self.snoozeLabel.pack()
+
+        self.offButton = Button(self, text='Alarm off', command=lambda: clock.alarm_off(controller))
+        self.offButton.pack()
 
 # Instantiate a clock and start ticking
 # Instantiate a gui and start it up
