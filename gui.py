@@ -24,7 +24,7 @@ class Clock:
         self.lights_set = False
 
         # alarm tones list/alarm times list (initial index = 0)
-        self.alarm_times = ['9:38 PM', '8:00 AM', 'add_more_alarms_here']
+        self.alarm_times = ['9:38 PM', 'add_more_alarms_here']
         self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
         self.next_alarm_time = 0
         self.alarm_tone = 0
@@ -216,6 +216,9 @@ class ClockPage(Frame):
 
         menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
         menuButton.pack()
+
+        setAlarmButton = Button(self, text='Set Alarm', command=lambda: clock.set_alarm(clock.next_alarm_time, gui))
+        setAlarmButton.pack()
 
 # settings page of the gui
 class SettingsPage(Frame):

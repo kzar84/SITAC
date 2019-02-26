@@ -1,3 +1,5 @@
-Sudo apt-get update
-Sudo apt-get upgrade
-Sudo apt-get install python-tk
+sudo apt-get update
+sudo apt-get upgrade
+sudo apt-get install python-tk
+sudo apt-get install git
+git clone https://www.github.com/kzar84/SITAC
