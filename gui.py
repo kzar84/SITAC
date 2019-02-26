@@ -97,6 +97,7 @@ class Clock:
         gui.show_frame(AlarmPage)
         # subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone] + ' &', shell=True)
         pygame.mixer.music.load('alarm_tones/' + self.alarm_tones[self.alarm_tone])
+        pygame.mixer.music.set_volume(self.volume)
         pygame.mixer.music.play()
             
     # implements snooze functionality
