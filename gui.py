@@ -3,6 +3,7 @@
 from tkinter import *
 import time
 import subprocess
+import pygame
 
 # Class that handles clock functionality
 class Clock:
@@ -24,7 +25,7 @@ class Clock:
         self.lights_set = False
 
         # alarm tones list/alarm times list (initial index = 0)
-        self.alarm_times = ['9:38 PM', 'add_more_alarms_here']
+        self.alarm_times = ['12:43 PM', 'add_more_alarms_here']
         self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
         self.next_alarm_time = 0
         self.alarm_tone = 0
@@ -36,7 +37,7 @@ class Clock:
     # Fucntion that gets the current time every 500ms and updates appropriate label
     def tick(self, gui):
         # get the current local time from the PC
-        self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
+        self.next_time = time.strftime('%-I:%M %p') # %#I use if for windows, change to %-I when running on linux
         
         # if time string has changed, update it
         if self.next_time != self.current_time:
@@ -57,7 +58,7 @@ class Clock:
     # Callback functions for updating gui status strings
     def set_alarm(self, time, gui):
         # set new status string, alarm time, and snooze time
-        self.alarm_set_str = 'Alarm: ON'
+        self.alarm_set = True
         self.next_alarm_time = time
         self.snooze_time = time          
         self.update_alarm_set(gui)
@@ -94,12 +95,15 @@ class Clock:
         # turn on alarm_on bool, show the alarm page, and play selected alarm tone'
         self.alarm_on = True
         gui.show_frame(AlarmPage)
-        subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone] + ' &', shell=True)
+        # subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone] + ' &', shell=True)
+        pygame.mixer.music.load('alarm_tones/' + self.alarm_tones[self.alarm_tone])
+        pygame.mixer.music.play()
             
     # implements snooze functionality
     def snooze(self, gui):
         # can add support for customizable snooze ammounts
-        subprocess.call('kill %1', shell=True)
+        # subprocess.call('kill %1', shell=True)
+        pygame.mixer.music.stop()
         self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
         gui.frames[SnoozePage].snoozeLabel.config(text='Snoozing until ' + self.snooze_time)
         self.snoozing = True
@@ -108,11 +112,11 @@ class Clock:
     # turn off the alarm
     def alarm_off(self, gui):
         # Go back  to clockpage, turn off alarm_on/snoozing/alarm_set bool, stop audio play
+        pygame.mixer.music.stop()
         self.alarm_set = False
         self.alarm_on = False
         self.snoozing = False
         self.update_alarm_set(gui)
-        subprocess.call('kill %1', shell=True)
         gui.show_frame(ClockPage)
 
     # NOT IMPLEMENTED
@@ -123,7 +127,8 @@ class Clock:
     # NOT IMPLEMENTED
     # Toggles lights
     def lights(self):
-        print('turning on the lights')
+        print('turning on the lights')sKater9421
+        
 
     # NOT TESTED
     # Change the volume
@@ -270,6 +275,7 @@ class SnoozePage(Frame):
 
 # Instantiate a clock and start ticking
 # Instantiate a gui and start it up
+pygame.init()
 clock = Clock()
 gui = MainWindow()
 clock.tick(gui)
