@@ -1,9 +1,9 @@
 # use Tkinter to show a digital clock
 
 from tkinter import *
+from pygame import music
 import time
 import subprocess
-import pygame
 
 # Class that handles clock functionality
 class Clock:
@@ -95,7 +95,6 @@ class Clock:
         # turn on alarm_on bool, show the alarm page, and play selected alarm tone'
         self.alarm_on = True
         gui.show_frame(AlarmPage)
-        # subprocess.call('omxplayer alarm_tones/' + self.alarm_tones[self.alarm_tone] + ' &', shell=True)
         pygame.mixer.music.load('alarm_tones/' + self.alarm_tones[self.alarm_tone])
         pygame.mixer.music.set_volume(self.volume)
         pygame.mixer.music.play()
@@ -103,7 +102,6 @@ class Clock:
     # implements snooze functionality
     def snooze(self, gui):
         # can add support for customizable snooze ammounts
-        # subprocess.call('kill %1', shell=True)
         pygame.mixer.music.stop()
         self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
         gui.frames[SnoozePage].snoozeLabel.config(text='Snoozing until ' + self.snooze_time)
@@ -130,14 +128,6 @@ class Clock:
     def lights(self):
         print('turning on the lights')
         
-
-    # NOT TESTED
-    # Change the volume
-    def set_volume(self, level):
-        # subprocess.call(bash command, shell=True)
-        # NOT TESTED
-        subprocess.call('amixer set PCM -- ' + ((level/25)*100) + '%', shell=True)
-        print('setting volume')
 
     # add minutes to a specified time
     # 7:00 AM vs 07:00 AM
@@ -175,7 +165,7 @@ class Clock:
             stime = str(new_hour) + ':' + str(new_minutes) + new_m
         else:
             stime = str(new_hour) + ':0' + str(new_minutes) + new_m
-        print(stime)
+
         return stime
 
 # Controller class for gui
