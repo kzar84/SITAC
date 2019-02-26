@@ -127,7 +127,7 @@ class Clock:
     # NOT IMPLEMENTED
     # Toggles lights
     def lights(self):
-        print('turning on the lights')sKater9421
+        print('turning on the lights')
         
 
     # NOT TESTED
