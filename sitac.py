@@ -24,17 +24,20 @@ class Clock:
         self.brew_set =   False
         self.lights_set = False
 
-        # alarm tones list/alarm times list (initial index = 0)
-        self.alarm_times = ['7:00 AM', 'add_more_alarms_here']
-        self.alarm_tones = ['buzzer.wav', 'add_more_alarms_here.wav']
+        # alarm time list (initial time 7:00 AM)
+        self.alarm_times = ['7:00 AM']
         self.next_alarm_time = 0
-        self.alarm_tone = 0
         self.snooze_time = ''
 
-        # Volume (0-50, must be between 0-1.0 when setting using pygame)
-        self.volume = 25/50
+        # alarm tones dictionaries (initial alarm buzzer)
+        self.alarm_tones_file = {'Buzzer':'buzzer.wav', 'Police':'police.wav'}
+        self.alarm_tones_name = ['Buzzer', 'Police']
+        self.alarm_tone = 'Buzzer'
 
-    # Fucntion that gets the current time every 500ms and updates appropriate label
+        # Volume (0-30, must be between 0-1.0 when setting using pygame)
+        self.volume = 15
+
+    # Fucntion that gets the current time every 500ms, checks for an alarm
     def tick(self, gui):
         # get the current local time from the PC
         self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
@@ -44,12 +47,12 @@ class Clock:
             self.current_time = self.next_time
             gui.frames[ClockPage].clockLabel.config(text=self.next_time)
         
-        # check to see if an alarm is ready
-        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on): 
+        # check to see if an alarm is ready (time matches, alarm is set, alarm is not currently playing, not currently snoozing)
+        if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on and not self.snoozing): 
             self.alarm(gui)
         
         # check to see if in snoozing state
-        if ((self.current_time == self.snooze_time) and self.snoozing):
+        if ((self.current_time == self.snooze_time) and self.snoozing and not self.alarm_on):
             self.alarm(gui)
         
         # recall function after 500 miliseconds
@@ -96,25 +99,24 @@ class Clock:
 
         statusLabel.config(text=self.alarm_set_str + '\n' + self.brew_set_str + '\n' + self.lights_set_str)
 
-    # subprocess is used in below functions for exectuing terminal commands in linux
-    # subprocess.call(bash command, shell=True)
 
     # Sounds the alarm
     def alarm(self, gui):
         # turn on alarm_on bool, show the alarm page, and play selected alarm tone'
         self.alarm_on = True
         gui.show_frame(AlarmPage)
-        pygame.mixer.music.load('alarm_tones/' + self.alarm_tones[self.alarm_tone])
-        pygame.mixer.music.set_volume(self.volume)
+        pygame.mixer.music.load('alarm_tones/' + self.alarm_tones_file[self.alarm_tone])
+        pygame.mixer.music.set_volume(self.volume/30)
         pygame.mixer.music.play()
             
     # implements snooze functionality
     def snooze(self, gui):
         # can add support for customizable snooze ammounts
+        self.snoozing = True
+        self.alarm_on = False
         pygame.mixer.music.stop()
         self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
         gui.frames[SnoozePage].snoozeLabel.config(text='Snoozing until ' + self.snooze_time)
-        self.snoozing = True
         gui.show_frame(SnoozePage)     
 
     # turn off the alarm
@@ -220,7 +222,7 @@ class ClockPage(Frame):
         menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
         menuButton.pack()
 
-        setAlarmButton = Button(self, text='Set Alarm', command=lambda: clock.set_alarm(clock.next_alarm_time, gui))
+        setAlarmButton = Button(self, text='Set Alarm', command=lambda: clock.set_alarm(clock.alarm_times[clock.next_alarm_time], gui))
         setAlarmButton.pack()
 
     # resets all labels on the page
@@ -233,60 +235,84 @@ class ClockPage(Frame):
 class SettingsPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        # add page stuff
+        # Alarm settings
+        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.alarm_times[clock.next_alarm_time])
+        self.alarmLabel.pack()
+        
         # set up dropdown menu for selecting hour
         self.hours = []
         for i in range(12):
             self.hours.append(str(i+1))
         self.hour = StringVar(self)
         self.hour.set(self.hours[0])
-        self.hourMenu = OptionMenu(self, self.hour, self.hours[0], *(self.hours))
+        self.hourMenu = OptionMenu(self, self.hour, *self.hours)
         self.hourMenu.pack()
-
         # set up dropdown menu for selecting minute
         self.minutes = []
-        for i in range(100):
-            self.minutes.append(str(i+1))
+        for i in range(12):
+            self.minutes.append(str(i*5))
+            # Pad the value with a 0 if the length is less than 2
+            if (len(self.minutes[i]) < 2):
+                self.minutes[i] =  '0' + self.minutes[i]
         self.minute = StringVar(self)
         self.minute.set(self.minutes[0])
-        self.minuteMenu = OptionMenu(self, self.minute, self.minutes[0], *self.minutes)
+        self.minuteMenu = OptionMenu(self, self.minute, *self.minutes)
         self.minuteMenu.pack()
-
         # set up dropdown menu for selecting AM/PM
         self.ms = ['AM', 'PM']
         self.m = StringVar(self)
         self.m.set(self.ms[0])
-        self.mMenu = OptionMenu(self, self.m, self.ms[0], *self.ms)
+        self.mMenu = OptionMenu(self, self.m, *self.ms)
         self.mMenu.pack()
 
-        # Set up various labels for display
-        self.alarmLabel = Label(self, font=('times', 15, 'bold'), text='Next alarm: ' + clock.alarm_times[clock.next_alarm_time])
-        self.alarmLabel.pack()
-
-        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: ' + str(clock.volume * 50))
+        # Volume setting
+        self.volumeLabel = Label(self, font=('times', 15, 'bold'), text='Volume: ' + str(clock.volume))
         self.volumeLabel.pack()
+        # Scale for setting the volume
+        self.volumeScale = Scale(self, from_=0, to=30, orient=HORIZONTAL)
+        self.volumeScale.pack()
 
-        self.toneLabel = Label(self,font=('times', 15, 'bold'), text='Alarm tone: ' + clock.alarm_tones[clock.alarm_tone])
+        # Alarm tone setting
+        self.toneLabel = Label(self,font=('times', 15, 'bold'), text='Alarm tone: ' + clock.alarm_tone)
         self.toneLabel.pack()
+        # Drop down menu for selecting alarm tone
+        self.tones = []
+        for i in range(len(clock.alarm_tones_name)):
+            self.tones.append(clock.alarm_tones_name[i])
+        self.tone = StringVar(self)
+        self.tone.set(self.tones[0])
+        self.toneMenu = OptionMenu(self, self.tone, *self.tones)
+        self.toneMenu.pack()
+
         
+        # Button that sets new alarm according to input (peice hour/minute/m together to pass to set_alarm)
         self.setAlarmButton = Button(self, text="Set Alarm", command=lambda: 
             clock.set_alarm(self.hour.get() + ':' + self.minute.get() + ' ' + self.m.get(), controller))
         self.setAlarmButton.pack()
-
+        # Updates the settings (volume and alarmtone) to the currently selected values
+        self.updateSettingsButton = Button(self, text="Update Settings", command=lambda: self.update_settings(controller))
+        self.updateSettingsButton.pack()
+        # Returns to ClockPage
         homeButton = Button(self, text='Home', command=lambda: controller.show_frame(ClockPage))
         homeButton.pack()
 
+    # Updates clock settings (volume and alarmtone)
+    def update_settings(self, controller):
+        clock.volume = self.volumeScale.get()
+        clock.alarm_tone = self.tone.get()
+        self.refresh_page()
+   
+        
     # resets all labels on the page
     def refresh_page(self):
         self.alarmLabel.config(text='Next alarm: ' + clock.alarm_times[clock.next_alarm_time])
-        self.volumeLabel.config(text='Volume: ' + str(clock.volume * 50))
-        self.toneLabel.config(text='Alarm tone: ' + clock.alarm_tones[clock.alarm_tone])
+        self.volumeLabel.config(text='Volume: ' + str(clock.volume))
+        self.toneLabel.config(text='Alarm tone: ' + clock.alarm_tone)
 
 # settings page of the gui
 class AlarmPage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        # add page stuff
         # Set up various labels for display
         self.wakeUpLabel = Label(self, font=('times', 30, 'bold'), text='Rise and Shine')
         self.wakeUpLabel.pack()
@@ -301,7 +327,6 @@ class AlarmPage(Frame):
 class SnoozePage(Frame):
     def __init__(self, parent, controller):
         Frame.__init__(self, parent)
-        # add page stuff
         # Set up various labels for display
         self.clockLabel = Label(self, font=('times', 30, 'bold'), text=clock.current_time)
         self.clockLabel.pack()
