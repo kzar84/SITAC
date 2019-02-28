@@ -1,5 +1,7 @@
 sudo apt-get update
 sudo apt-get upgrade
-sudo apt-get install python-tk
+sudp apt-get install python
+sudo apt-get install python3
+sudo apt-get install python-pygame
 sudo apt-get install git
 git clone https://www.github.com/kzar84/SITAC
