@@ -1,5 +1,3 @@
-# use Tkinter to show a digital clock
-
 # add configuration file that stores the current settings. This will be used in the event of power loss and/or default settings
 
 from tkinter import *
