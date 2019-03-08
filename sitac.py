@@ -13,12 +13,12 @@ class Clock:
         self.next_time = ''
 
         # Status Strings
-        self.alarm_set_str =  'Alarm:  ON'
+        self.alarm_set_str =  'Alarm:  OFF'
         self.brew_set_str =   'Brew:   OFF'
         self.lights_set_str = 'Lights: OFF'
 
         # Status Booleans
-        self.alarm_set =  True     # set true for testing purposes
+        self.alarm_set =  False     # set true for testing purposes
         self.alarm_on =   False
         self.snoozing =   False
         self.brew_set =   False
@@ -35,7 +35,7 @@ class Clock:
         self.alarm_tone = 'Buzzer'
 
         # Volume (0-50, must be between 0-1.0 when setting using pygame)
-        self.volume = 15
+        self.volume = 25
 
     # Fucntion that gets the current time every 500ms, checks for an alarm
     def tick(self, gui):
@@ -236,8 +236,7 @@ class ClockPage(Frame):
         self.statusLabel.grid(row = 3, column = 0)
         self.statusLabel.grid(sticky=S+W)
 
-        menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage))
-        menuButton.config(height = 5, width = 20)
+        menuButton = Button(self, text='Settings', command=lambda: controller.show_frame(SettingsPage), height=5, width=20)
         menuButton.grid(row = 3, column = 1, sticky=S+E)
 
 
@@ -375,10 +374,10 @@ class AlarmPage(Frame):
         self.wakeUpLabel = Label(self, font=('times', 35, 'bold'), text='Rise and Shine\nThe time is ' + clock.current_time)
         self.wakeUpLabel.grid(row=0, column=0, columnspan=4, sticky=N+S+E+W)
 
-        self.offButton = Button(self, text='Dismiss', command=lambda: clock.alarm_off(controller))
+        self.offButton = Button(self, text='Dismiss', command=lambda: clock.alarm_off(controller), height=5)
         self.offButton.grid(row=2, column=1, stick=E+W)
 
-        self.snoozeButton = Button(self, text='Snooze', command=lambda: clock.snooze(controller))
+        self.snoozeButton = Button(self, text='Snooze', command=lambda: clock.snooze(controller), height=5)
         self.snoozeButton.grid(row=2, column=2, sticky=E+W)
 
 # Add snoozing page (snoozing until: , with menu button)
@@ -395,7 +394,7 @@ class SnoozePage(Frame):
         self.snoozeLabel = Label(self, font=('times', 30, 'bold'))
         self.snoozeLabel.grid(row=0, column=0, columnspan=3, sticky=N+S+E+W)
 
-        self.offButton = Button(self, text='Alarm off', command=lambda: clock.alarm_off(controller))
+        self.offButton = Button(self, text='Alarm off', command=lambda: clock.alarm_off(controller), height=5)
         self.offButton.grid(row=1, column=1, sticky=E+W)
 
 # Instantiate a clock and start ticking
