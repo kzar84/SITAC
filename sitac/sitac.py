@@ -1,9 +1,9 @@
-# add configuration file that stores the current settings. This will be used in the event of power loss and/or default settings
+ # add configuration file that stores the current settings. This will be used in the event of power loss and/or default settings
 
 from tkinter import *
 import pygame
 import time
-import subprocess
+import socket
 
 # Class that handles clock functionality
 class Clock:
@@ -151,6 +151,12 @@ class Clock:
     # NOT IMPLEMENTED
     # Toggles coffee brewing
     def brew(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # ip address is local to my network, will have to change when running on gtother
+        # possibly set up esp8266 with host name and connect with that?
+        s.connect(('192.168.1.37', 80))
+        s.sendall(b'toggle')
+        s.close()
         print('starts brewing')
 
     # NOT IMPLEMENTED
@@ -184,6 +190,7 @@ class Clock:
             stime = str(new_hour) + ':0' + str(new_minutes) + new_m
 
         return stime
+
 
 # Controller class for gui
 class MainWindow(Tk):
@@ -289,8 +296,8 @@ class SettingsPage(Frame):
         
         # set up dropdown menu for selecting minute
         self.minutes = []
-        for i in range(12):
-            self.minutes.append(str(i*5))
+        for i in range(60):
+            self.minutes.append(str(i))
             # Pad the value with a 0 if the length is less than 2
             if (len(self.minutes[i]) < 2):
                 self.minutes[i] =  '0' + self.minutes[i]
