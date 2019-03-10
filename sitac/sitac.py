@@ -129,6 +129,7 @@ class Clock:
         self.alarm_on = True
             
     # implements snooze functionality
+    # turn off lights/coffee?
     def snooze(self, gui):
         # can add support for customizable snooze ammounts
         pygame.mixer.music.stop()
@@ -148,7 +149,6 @@ class Clock:
         self.update_alarm_set(gui)
         gui.show_frame(ClockPage)
 
-    # NOT IMPLEMENTED
     # Toggles coffee brewing
     def brew(self):
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -157,12 +157,14 @@ class Clock:
         s.connect(('192.168.1.37', 80))
         s.sendall(b'toggle')
         s.close()
-        print('starts brewing')
 
-    # NOT IMPLEMENTED
     # Toggles lights
     def lights(self):
-        print('turning on the lights')
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # ip address is local to my network, will have to change when running on gtother
+        s.connect(('192.168.1.36', 80))
+        s.sendall(b'toggle')
+        s.close()
 
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
