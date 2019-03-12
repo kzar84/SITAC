@@ -121,9 +121,9 @@ class Clock:
         pygame.mixer.music.play()
         gui.show_frame(AlarmPage)
         
-        if (self.brew_set):
+        if self.brew_set:
             self.brew()
-        if(self.lights_set):
+        if self.lights_set:
             self.lights()
 
         self.alarm_on = True
@@ -151,20 +151,28 @@ class Clock:
 
     # Toggles coffee brewing
     def brew(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # ip address is local to my network, will have to change when running on gtother
-        # possibly set up esp8266 with host name and connect with that?
-        s.connect(('192.168.1.37', 80))
-        s.sendall(b'toggle')
-        s.close()
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.timeout(1)
+            # ip address is local to my network, will have to change when running on gtother
+            # possibly set up esp8266 with host name and connect with that?
+            s.connect(('192.168.1.37', 80))
+            s.sendall(b'toggle')
+            s.close()
+        except:
+            print("Could not connect to device")
 
     # Toggles lights
     def lights(self):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        # ip address is local to my network, will have to change when running on gtother
-        s.connect(('192.168.1.36', 80))
-        s.sendall(b'toggle')
-        s.close()
+        try:
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.timeout(1)
+            # ip address is local to my network, will have to change when running on gtother
+            s.connect(('192.168.1.36', 80))
+            s.sendall(b'toggle')
+            s.close()
+        except:
+            print("Could not connect to device")
 
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
