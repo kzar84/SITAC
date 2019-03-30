@@ -1,12 +1,12 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 import sys
-import sitac_ui
+import sitac_ui_gold_theme
 import pygame
 import time
 import socket
 
 
-class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
+class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
@@ -20,8 +20,8 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         self.next_time = ''
 
         # Status Strings
-        self.alarm_set_str =  'Alarm:  OFF'
-        self.brew_set_str =   'Brew:   OFF'
+        self.alarm_set_str =  'Alarm: OFF'
+        self.brew_set_str =   'Brew: OFF'
         self.lights_set_str = 'Lights: OFF'
 
         # Status Booleans
@@ -35,11 +35,15 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         self.alarm_times = ['7:00 AM']
         self.next_alarm_time = 0
         self.snooze_time = ''
+        self.brew_time = ''
 
         # alarm tones dictionaries (initial alarm buzzer)
         self.alarm_tones_file = {'Buzzer':'buzzer.wav', 'Police':'police.wav'}
         self.alarm_tones_name = ['Buzzer', 'Police']
         self.alarm_tone = 'Buzzer'
+
+        # dictionary for gui pages
+        self.page_names = {'ClockPage':0, 'SettingsPage':1, 'AlarmPage':2, 'SnoozePage':3}
 
         # Volume (0-50, must be between 0-1.0 when setting using pygame)
         self.volume = 25
@@ -48,11 +52,11 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         # CONNECT THE GUI COMPONENTS #
         ##############################
         # Clock page buttons
-        self.settingsButton.clicked.connect(lambda: self.goToPage(1))
+        self.settingsButton.clicked.connect(lambda: self.goToPage('SettingsPage'))
         # Settings page buttons
-        self.homeButton.clicked.connect(lambda: self.goToPage(0))
-        self.alarmOffButton.clicked.connect(lambda: self.unset_alarm())
-        self.brewButton.clicked.connect(lambda: self.set_brew())
+        self.homeButton.clicked.connect(lambda: self.goToPage('ClockPage'))
+        # self.alarmOffButton.clicked.connect(lambda: self.unset_alarm())
+        self.brewButton.clicked.connect(lambda: self.set_brew(self.delayTimeInput.time().toString('h:mm A')))
         self.lightsButton.clicked.connect(lambda: self.set_lights())
         self.setAlarmButton.clicked.connect(lambda: self.set_alarm(self.alarmTimeInput.time().toString('h:mm A')))
         # Set up the volume slider
@@ -69,31 +73,11 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         ################################
         # Set up a timer and call tick #
         ################################
-        self.goToPage(0)
+        self.goToPage('ClockPage')
         timer = QtCore.QTimer(self) 
         timer.timeout.connect(self.tick) 
-        timer.start(200) 
+        timer.start(500) 
         self.tick()
-
-    
-    # Function that changes gui pages
-    def goToPage(self, i):
-        self.pages.setCurrentIndex(i)
-
-    # Refreshes the clock page
-    def refresh_clockPage(self):
-        self.nextAlarmLabel.setText('Next alarm: ' + self.alarm_times[self.next_alarm_time])
-        self.statusLabel.setText(self.alarm_set_str +
-            '\n' + self.brew_set_str + '\n' + self.lights_set_str)
-
-    # Refreshes the settings page
-    def refresh_settingsPage(self):
-        #self.nextAlarmLabel.setText('Alarm: ' + self.alarm_times[self.next_alarm_time])
-        self.volumeLabel.setText('Volume: ' + str(self.volume))
-        self.toneLabel.setText('Alarm tone: ' + self.alarm_tone)
-        self.brewButton.setText(self.brew_set_str)
-        self.lightsButton.setText(self.lights_set_str)
-
 
 
     # Fucntion that gets the current time every 500ms, checks for an alarm
@@ -113,9 +97,35 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         # check to see if in snoozing state
         if ((self.current_time == self.snooze_time) and self.snoozing and not self.alarm_on):
             self.alarm()
+
+        # Check to see if the brew is set
+        if (self.brew_set and self.brew_time == self.current_time):
+            self.brew()
+    
+    # Function that changes gui pages
+    def goToPage(self, page_name):
+        self.pages.setCurrentIndex(self.page_names[page_name])
+
+    # Refreshes the clock page
+    def refresh_clockPage(self):
+        self.nextAlarmLabel.setText('Next alarm: ' + self.alarm_times[self.next_alarm_time])
+        self.statusLabel.setText(self.alarm_set_str +
+            '\n' + self.brew_set_str + '\n' + self.lights_set_str)
+
+    # Refreshes the settings page
+    def refresh_settingsPage(self):
+        #self.nextAlarmLabel.setText('Alarm: ' + self.alarm_times[self.next_alarm_time])
+        self.volumeLabel.setText('Volume: ' + str(self.volume))
+        self.toneLabel.setText('Alarm tone: ' + self.alarm_tone)
+        self.setAlarmButton.setText(self.alarm_set_str)
+        self.brewButton.setText(self.brew_set_str)
+        self.lightsButton.setText(self.lights_set_str)
         
     # Callback functions for updating gui status strings
     def set_alarm(self, time):
+        if (self.alarm_set):
+            self.unset_alarm()
+            return
         # set the new alarm index if its in the list
         try:
             self.next_alarm_time = self.alarm_times.index(time)
@@ -124,8 +134,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
             self.alarm_times.append(time)
             self.alarm_times.sort()
             self.next_alarm_time = self.alarm_times.index(time)
-        # set initial snooze time, alarm_set bool, and update the page
-        self.snooze_time = time  
+        # set alarm_set bool, and update the page
         self.alarm_set = True        
         self.update_alarm_set()
 
@@ -133,8 +142,10 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         self.alarm_set = False
         self.update_alarm_set()
 
-    def set_brew(self):
+    def set_brew(self, brew_time):
         self.brew_set = not self.brew_set
+        if self.brew_set:
+            self.brew_time = brew_time
         self.update_brew_set()
 
     def set_lights(self):
@@ -176,7 +187,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         pygame.mixer.music.set_volume(self.volume/50)
         pygame.mixer.music.play()
         self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%#I:%M %p'))
-        self.goToPage(2)
+        self.goToPage('AlarmPage')
         
         if self.brew_set:
             self.brew()
@@ -188,11 +199,14 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
     # implements snooze functionality
     # turn off lights/coffee?
     def snooze(self):
+        # If the lights were set, turn them back off
+        if self.lights_set:
+            self.lights()
         # can add support for customizable snooze ammounts
         pygame.mixer.music.stop()
         self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
         self.snoozeLabel.setText('Snoozing until ' + self.snooze_time)
-        self.goToPage(3) 
+        self.goToPage('SnoozePage') 
         self.alarm_on = False  
         self.snoozing = True
 
@@ -204,7 +218,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
         self.alarm_on = False
         self.snoozing = False
         self.update_alarm_set()
-        self.goToPage(0)
+        self.goToPage('ClockPage')
 
     # Toggles coffee brewing
     def brew(self):
@@ -239,7 +253,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui.Ui_MainWindow):
     # Change the alarm tone
     def updateAlarmTone(self):
         self.alarm_tone = self.tonesList.currentText()
-   
+
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
         # pad it with a 0 if its length is less than 7
