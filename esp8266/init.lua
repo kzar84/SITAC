@@ -1,7 +1,7 @@
 -- Set gpio pin up and default to low
 local status = gpio.LOW
-local pin = 3
-gpio.mode(3, gpio.OUTPUT)
+local pin = 0
+gpio.mode(pin, gpio.OUTPUT)
 gpio.write(pin, status)
 
 -- Callback that sets the gpio pin high/low
