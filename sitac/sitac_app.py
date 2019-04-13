@@ -288,8 +288,11 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 def main():
     pygame.init()
     app = QtWidgets.QApplication(sys.argv)  # A new instance of QApplication
-    form = SITAC()                      # We set the form to be our ExampleApp (design)
-    form.show()                         # Show the form
+    form = SITAC()
+    # set the window to frameless (no title bar), close app using Alt+F4                      
+    flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
+    form.setWindowFlags(flags)
+    form.showFullScreen()               # Show the form in fullscreen
     sys.exit(app.exec_())               # and execute the app
 
 
