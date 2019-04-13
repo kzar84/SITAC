@@ -757,55 +757,6 @@ Alarm: OFF</string>
           </property>
          </widget>
         </item>
-        <item row="3" column="0" colspan="2" alignment="Qt::AlignHCenter">
-         <widget class="QTimeEdit" name="alarmTimeInput">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>125</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>16</pointsize>
-           </font>
-          </property>
-          <property name="time">
-           <time>
-            <hour>12</hour>
-            <minute>0</minute>
-            <second>0</second>
-           </time>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="2" colspan="2" alignment="Qt::AlignHCenter">
-         <widget class="QTimeEdit" name="delayTimeInput">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
-          </property>
-          <property name="minimumSize">
-           <size>
-            <width>125</width>
-            <height>0</height>
-           </size>
-          </property>
-          <property name="font">
-           <font>
-            <pointsize>16</pointsize>
-           </font>
-          </property>
-         </widget>
-        </item>
         <item row="8" column="7" alignment="Qt::AlignRight">
          <widget class="QPushButton" name="homeButton">
           <property name="minimumSize">
@@ -819,6 +770,64 @@ Alarm: OFF</string>
           </property>
          </widget>
         </item>
+        <item row="6" column="3" alignment="Qt::AlignHCenter">
+         <widget class="QPushButton" name="lightsButton">
+          <property name="minimumSize">
+           <size>
+            <width>135</width>
+            <height>40</height>
+           </size>
+          </property>
+          <property name="palette">
+           <palette>
+            <active>
+             <colorrole role="Button">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>0</red>
+                <green>0</green>
+                <blue>0</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </active>
+            <inactive>
+             <colorrole role="Button">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>0</red>
+                <green>0</green>
+                <blue>0</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </inactive>
+            <disabled>
+             <colorrole role="Button">
+              <brush brushstyle="SolidPattern">
+               <color alpha="255">
+                <red>0</red>
+                <green>0</green>
+                <blue>0</blue>
+               </color>
+              </brush>
+             </colorrole>
+            </disabled>
+           </palette>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
+          <property name="text">
+           <string>Lights: OFF</string>
+          </property>
+         </widget>
+        </item>
         <item row="6" column="7">
          <widget class="QComboBox" name="tonesList">
           <property name="sizePolicy">
@@ -826,6 +835,34 @@ Alarm: OFF</string>
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="0" colspan="2" alignment="Qt::AlignRight">
+         <widget class="QTimeEdit" name="alarmTimeInput">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>150</width>
+            <height>50</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>18</pointsize>
+           </font>
+          </property>
+          <property name="time">
+           <time>
+            <hour>12</hour>
+            <minute>0</minute>
+            <second>0</second>
+           </time>
           </property>
          </widget>
         </item>
@@ -996,61 +1033,24 @@ Alarm: OFF</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="3" alignment="Qt::AlignHCenter">
-         <widget class="QPushButton" name="lightsButton">
+        <item row="3" column="2" colspan="2" alignment="Qt::AlignHCenter">
+         <widget class="QTimeEdit" name="delayTimeInput">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="minimumSize">
            <size>
-            <width>135</width>
-            <height>40</height>
+            <width>150</width>
+            <height>50</height>
            </size>
-          </property>
-          <property name="palette">
-           <palette>
-            <active>
-             <colorrole role="Button">
-              <brush brushstyle="SolidPattern">
-               <color alpha="255">
-                <red>0</red>
-                <green>0</green>
-                <blue>0</blue>
-               </color>
-              </brush>
-             </colorrole>
-            </active>
-            <inactive>
-             <colorrole role="Button">
-              <brush brushstyle="SolidPattern">
-               <color alpha="255">
-                <red>0</red>
-                <green>0</green>
-                <blue>0</blue>
-               </color>
-              </brush>
-             </colorrole>
-            </inactive>
-            <disabled>
-             <colorrole role="Button">
-              <brush brushstyle="SolidPattern">
-               <color alpha="255">
-                <red>0</red>
-                <green>0</green>
-                <blue>0</blue>
-               </color>
-              </brush>
-             </colorrole>
-            </disabled>
-           </palette>
           </property>
           <property name="font">
            <font>
-            <pointsize>12</pointsize>
+            <pointsize>18</pointsize>
            </font>
-          </property>
-          <property name="styleSheet">
-           <string notr="true"/>
-          </property>
-          <property name="text">
-           <string>Lights: OFF</string>
           </property>
          </widget>
         </item>
