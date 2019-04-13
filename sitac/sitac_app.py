@@ -289,9 +289,10 @@ def main():
     pygame.init()
     app = QtWidgets.QApplication(sys.argv)  # A new instance of QApplication
     form = SITAC()
-    # set the window to frameless (no title bar), close app using Alt+F4                      
+    # set the window to frameless (no title bar), close app using Alt+F4, and hide the cursor                  
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
+    form.setCursor(QtCore.Qt.BlankCursor)
     form.showFullScreen()               # Show the form in fullscreen
     sys.exit(app.exec_())               # and execute the app
 
