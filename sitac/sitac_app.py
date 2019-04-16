@@ -69,6 +69,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.snoozeButton.clicked.connect(lambda: self.snooze())
         # Snooze page buttons
         self.snoozeOffButton.clicked.connect(lambda: self.alarm_off())
+        self.alarmTimeInput.dateTimeChanged.connect(lambda: self.update_alarm_time(self.alarmTimeInput.time().toString('h:mm A')))
 
         ################################
         # Set up a timer and call tick #
@@ -122,6 +123,20 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.lightsButton.setText(self.lights_set_str)
         
     # Callback functions for updating gui status strings
+    def update_alarm_time(self, time):
+        if (self.alarm_set):
+                    # set the new alarm index if its in the list
+            try:
+                self.next_alarm_time = self.alarm_times.index(time)
+            # if its not in the list, add it, sort the list, set the index
+            except:
+                self.alarm_times.append(time)
+                self.alarm_times.sort()
+                self.next_alarm_time = self.alarm_times.index(time)
+
+            self.update_alarm_set()
+
+    
     def set_alarm(self, time):
         if (self.alarm_set):
             self.unset_alarm()
@@ -293,7 +308,7 @@ def main():
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
     form.setCursor(QtCore.Qt.BlankCursor)
-    form.showFullScreen()               # Show the form in fullscreen
+    form.showFullScreen()            # Show the form in fullscreen
     sys.exit(app.exec_())               # and execute the app
 
 
