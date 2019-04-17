@@ -4,14 +4,19 @@ import sitac_ui_gold_theme
 import pygame
 import time
 import socket
+from threading import Thread
 
 
 class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def __init__(self):
         super(self.__class__, self).__init__()
         self.setupUi(self)
-        
 
+        # Server stuff
+        self.running = 0    #not listening
+        self.addr = None
+        self.conn = None
+        
         ################
         # CLASS FIELDS #
         ################
@@ -69,22 +74,163 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.snoozeButton.clicked.connect(lambda: self.snooze())
         # Snooze page buttons
         self.snoozeOffButton.clicked.connect(lambda: self.alarm_off())
+        # alarm time input
         self.alarmTimeInput.dateTimeChanged.connect(lambda: self.update_alarm_time(self.alarmTimeInput.time().toString('h:mm A')))
 
-        ################################
-        # Set up a timer and call tick #
-        ################################
+
+        # start up server thread
+        self.startc()
+
+        # Set up a timer and call tick 
         self.goToPage('ClockPage')
         timer = QtCore.QTimer(self) 
         timer.timeout.connect(self.tick) 
         timer.start(500) 
         self.tick()
 
+    # server thread
+    def socket_thread(self):
+        # Start up a server on port 9999, accept connection from all interfaces
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        port = 8080
+        self.s.bind(('', port))
+        self.s.listen()
+
+        while self.running != 0:
+            self.conn, self.addr = self.s.accept()
+            with self.conn: 
+                # Get the clocks current setting and send them on every connection
+                data = self.get_data() 
+                self.conn.sendall(data)
+                print('Connected by', self.addr)
+                while True:
+                    data = self.conn.recv(4096)
+                    if not data:
+                        break
+                    # call receive data to update clocks settings with data received
+                    self.receive_data(data)
+                    # self.conn.sendall(self.data)
+        
+        # close socket if self.running is 0
+        self.s.close()
+
+    # Start server thread
+    def startc(self):
+        # Start thread if its not running
+        if self.running == 0:
+            self.running = 1
+            self.thread=Thread(target=self.socket_thread)
+            self.thread.start()
+        else:
+            print ("thread already running")
+
+    # End server thread
+    def stopc(self):
+        if self.running:
+            print ("stopping thread")
+            self.running = 0
+            self.thread.join()
+        else:
+            print ("thread not running")  
+    
+    # Put together a string with clock values values
+    def get_data(self):
+        # Get the current time, parse based on length of string
+        alarm_time = self.alarm_times[self.next_alarm_time]
+        if (len(alarm_time) > 8):
+            
+            data_list = [0,0,0,0,0,0,0,0,0,0,0]
+
+            data_list[0] = alarm_time[0]
+            data_list[1] = alarm_time[2:3]
+            data_list[2] = alarm_time[5:6]
+        else:
+            data_list[0] = alarm_time[0:1]
+            data_list[1] = alarm_time[3:4]
+            data_list[2] = alarm_time[6:7]
+
+        # Get the alarm_set
+        if (self.alarm_set):
+            data_list[3] = 'True'
+        else:
+            data_list[3] = 'False'
+
+        # Get the brew time
+        brew_time = self.brew_time
+        if (len(brew_time) > 8):
+            data_list[4] = brew_time[0]
+            data_list[5] = brew_time[2:3]
+            data_list[6] = brew_time[5:6]
+        else:
+            data_list[4] = brew_time[0:1]
+            data_list[5] = brew_time[3:4]
+            data_list[6] = brew_time[6:7]   
+
+        # Get the brew_set
+        if (self.brew_set):
+            data_list[7] = 'True'
+        else:
+            data_list[7] = 'False'
+
+        if (self.lights_set):
+            data_list[8] = 'True'
+        else:
+            data_list[8] = 'False'
+
+        data_list[9] = self.alarm_tone
+        data_list[10] = self.volume
+
+        data = data_list[0] + ',' + data_list[1] + ',' + data_list[2] + ',' + data_list[3]  \
+        + ',' + data_list[4] + ',' + data_list[5] + ',' + data_list[6] + ',' + data_list[7] \
+        + ',' + data_list[8] + ',' + data_list[9]+ ',' + data_list[10]
+
+        return data
+
+    # Recieve data from the mobile app
+    def receive_data(self, data):
+        # Split data string into list (delimit on comma), 11 items
+        data_list = data.split(',')
+ 
+        # Put togther the alarm time
+        alarm_time = data_list[0] + ':' + data_list[1] + ' ' + data_list[2]
+        self.update_alarm_time(alarm_time)
+        # if an alarm is being set, get all the data and set the alarm
+        if (data_list[3] == 'True'):
+            # if the alarm is already set, update the alarm time
+            if (not self.alarm_set):
+                self.set_alarm(alarm_time)
+        # else, unset the alarm
+        else:
+            self.unset_alarm()
+
+        # Get the new brew time
+        self.brew_time = data_list[4] + ':' + data_list[5] + ' ' + data_list[6]
+        # Update brew_set with current value
+        if (self.brew_set):
+            if (data_list[7] != 'True'):
+                self.set_brew(self.brew_time)
+        else:
+            if (data_list[7] == 'True'):
+                self.set_brew(self.brew_time)
+
+        # Update the lights set
+        if (self.lights_set):
+            if (data_list[8] != 'True'):
+                self.set_lights()
+        else:
+            if (data_list[8] == 'True'):
+                self.set_lights()
+
+        # set the new alarm tone
+        self.alarm_tone = data_list[9]
+
+        # set the new volume
+        self.volume = data_list[10]
 
     # Fucntion that gets the current time every 500ms, checks for an alarm
     def tick(self):
         # get the current local time from the PC
-        self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
+        self.next_time = time.strftime('%-I:%M %p') # %#I use if for windows, change to %-I when running on linux
         
         # if time string has changed, update it
         if self.next_time != self.current_time:
@@ -125,7 +271,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     # Callback functions for updating gui status strings
     def update_alarm_time(self, time):
         if (self.alarm_set):
-                    # set the new alarm index if its in the list
+            # set the new alarm index if its in the list
             try:
                 self.next_alarm_time = self.alarm_times.index(time)
             # if its not in the list, add it, sort the list, set the index
@@ -135,8 +281,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
                 self.next_alarm_time = self.alarm_times.index(time)
 
             self.update_alarm_set()
-
-    
+   
     def set_alarm(self, time):
         if (self.alarm_set):
             self.unset_alarm()
@@ -198,10 +343,10 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     # Sounds the alarm
     def alarm(self):
         # play selected alarm tone, show the alarm page, and turn on alarm_on bool
-        pygame.mixer.music.load('alarm_tones/' + self.alarm_tones_file[self.alarm_tone])
+        pygame.mixer.music.load('../alarm_tones/' + self.alarm_tones_file[self.alarm_tone])
         pygame.mixer.music.set_volume(self.volume/50)
         pygame.mixer.music.play()
-        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%#I:%M %p'))
+        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%-I:%M %p'))
         self.goToPage('AlarmPage')
         
         if self.brew_set:
@@ -212,14 +357,13 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_on = True
             
     # implements snooze functionality
-    # turn off lights/coffee?
     def snooze(self):
         # If the lights were set, turn them back off
         if self.lights_set:
             self.lights()
         # can add support for customizable snooze ammounts
         pygame.mixer.music.stop()
-        self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
+        self.snooze_time = self.add_minutes(time.strftime('%-I:%M %p'), 1)
         self.snoozeLabel.setText('Snoozing until ' + self.snooze_time)
         self.goToPage('SnoozePage') 
         self.alarm_on = False  
@@ -307,8 +451,8 @@ def main():
     # set the window to frameless (no title bar), close app using Alt+F4, and hide the cursor                  
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
-    form.setCursor(QtCore.Qt.BlankCursor)
-    form.showFullScreen()            # Show the form in fullscreen
+    # form.setCursor(QtCore.Qt.BlankCursor)
+    form.show()            # Show the form in fullscreen
     sys.exit(app.exec_())               # and execute the app
 
 
