@@ -1,10 +1,10 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-import sys
 import sitac_ui_gold_theme
-import pygame
-import time
-import socket
 from threading import Thread
+import socket
+import pygame
+import sys
+import time
 
 
 class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
@@ -40,7 +40,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_times = ['7:00 AM']
         self.next_alarm_time = 0
         self.snooze_time = ''
-        self.brew_time = ''
+        self.brew_time = '7:00 AM'
 
         # alarm tones dictionaries (initial alarm buzzer)
         self.alarm_tones_file = {'Buzzer':'buzzer.wav', 'Police':'police.wav'}
@@ -101,14 +101,18 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
             with self.conn: 
                 # Get the clocks current setting and send them on every connection
                 data = self.get_data() 
-                self.conn.sendall(data)
+                self.conn.sendall(data.encode())
                 print('Connected by', self.addr)
                 while True:
                     data = self.conn.recv(4096)
+                    print(str(data))
                     if not data:
                         break
                     # call receive data to update clocks settings with data received
-                    self.receive_data(data)
+                    # get rid of b''
+                    data = str(data)
+                    l = len(data) - 1
+                    self.receive_data(data[2:l])
                     # self.conn.sendall(self.data)
         
         # close socket if self.running is 0
@@ -137,17 +141,15 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def get_data(self):
         # Get the current time, parse based on length of string
         alarm_time = self.alarm_times[self.next_alarm_time]
-        if (len(alarm_time) > 8):
-            
-            data_list = [0,0,0,0,0,0,0,0,0,0,0]
-
+        data_list = [0,0,0,0,0,0,0,0,0,0,0]
+        if (len(alarm_time) < 8): 
             data_list[0] = alarm_time[0]
-            data_list[1] = alarm_time[2:3]
-            data_list[2] = alarm_time[5:6]
+            data_list[1] = alarm_time[2:4]
+            data_list[2] = alarm_time[5:7]
         else:
-            data_list[0] = alarm_time[0:1]
-            data_list[1] = alarm_time[3:4]
-            data_list[2] = alarm_time[6:7]
+            data_list[0] = alarm_time[0:2]
+            data_list[1] = alarm_time[3:5]
+            data_list[2] = alarm_time[6:8]
 
         # Get the alarm_set
         if (self.alarm_set):
@@ -157,14 +159,14 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
         # Get the brew time
         brew_time = self.brew_time
-        if (len(brew_time) > 8):
+        if (len(brew_time) < 8):
             data_list[4] = brew_time[0]
-            data_list[5] = brew_time[2:3]
-            data_list[6] = brew_time[5:6]
+            data_list[5] = brew_time[2:4]
+            data_list[6] = brew_time[5:7]
         else:
             data_list[4] = brew_time[0:1]
-            data_list[5] = brew_time[3:4]
-            data_list[6] = brew_time[6:7]   
+            data_list[5] = brew_time[3:5]
+            data_list[6] = brew_time[6:8]   
 
         # Get the brew_set
         if (self.brew_set):
@@ -177,12 +179,12 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         else:
             data_list[8] = 'False'
 
-        data_list[9] = self.alarm_tone
-        data_list[10] = self.volume
+        data_list[9] = str(self.alarm_tone)
+        data_list[10] = str(self.volume)
 
         data = data_list[0] + ',' + data_list[1] + ',' + data_list[2] + ',' + data_list[3]  \
         + ',' + data_list[4] + ',' + data_list[5] + ',' + data_list[6] + ',' + data_list[7] \
-        + ',' + data_list[8] + ',' + data_list[9]+ ',' + data_list[10]
+        + ',' + data_list[8] + ',' + data_list[9] + ',' + data_list[10]
 
         return data
 
@@ -192,6 +194,8 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         data_list = data.split(',')
  
         # Put togther the alarm time
+        # hour = data_list[0]
+        # hour = hour(2:)
         alarm_time = data_list[0] + ':' + data_list[1] + ' ' + data_list[2]
         self.update_alarm_time(alarm_time)
         # if an alarm is being set, get all the data and set the alarm
@@ -227,10 +231,14 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         # set the new volume
         self.volume = data_list[10]
 
+        # Add code to update widgets and not just the text fields
+        self.refresh_clockPage()
+        self.refresh_settingsPage()
+
     # Fucntion that gets the current time every 500ms, checks for an alarm
     def tick(self):
         # get the current local time from the PC
-        self.next_time = time.strftime('%-I:%M %p') # %#I use if for windows, change to %-I when running on linux
+        self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
         
         # if time string has changed, update it
         if self.next_time != self.current_time:
@@ -346,7 +354,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         pygame.mixer.music.load('../alarm_tones/' + self.alarm_tones_file[self.alarm_tone])
         pygame.mixer.music.set_volume(self.volume/50)
         pygame.mixer.music.play()
-        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%-I:%M %p'))
+        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%#I:%M %p'))
         self.goToPage('AlarmPage')
         
         if self.brew_set:
@@ -363,7 +371,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
             self.lights()
         # can add support for customizable snooze ammounts
         pygame.mixer.music.stop()
-        self.snooze_time = self.add_minutes(time.strftime('%-I:%M %p'), 1)
+        self.snooze_time = self.add_minutes(time.strftime('%#I:%M %p'), 1)
         self.snoozeLabel.setText('Snoozing until ' + self.snooze_time)
         self.goToPage('SnoozePage') 
         self.alarm_on = False  
@@ -413,6 +421,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def updateAlarmTone(self):
         self.alarm_tone = self.tonesList.currentText()
 
+
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
         # pad it with a 0 if its length is less than 7
@@ -440,8 +449,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
         return stime
 
-        # Connect the buttons
-    
+        # Connect the buttons  
 
 
 def main():
@@ -452,7 +460,7 @@ def main():
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
     # form.setCursor(QtCore.Qt.BlankCursor)
-    form.show()            # Show the form in fullscreen
+    form.show()                         # Show the form in fullscreen
     sys.exit(app.exec_())               # and execute the app
 
 
