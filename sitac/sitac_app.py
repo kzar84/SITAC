@@ -94,26 +94,30 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         port = 8080
         self.s.bind(('', port))
-        self.s.listen()
+        self.s.listen(5)
 
         while self.running != 0:
             self.conn, self.addr = self.s.accept()
             with self.conn: 
-                # Get the clocks current setting and send them on every connection
-                data = self.get_data() 
-                self.conn.sendall(data.encode())
+                # Check whether we are sending or receiving data
                 print('Connected by', self.addr)
-                while True:
+                data = self.conn.recv(1024)
+                data = str(data)
+                l = len(data) - 1
+                if (data[2:l] == 'send'):
+                    data = self.get_data()
+                    self.conn.sendall(data.encode())
+                    self.conn.close()
+                else: 
                     data = self.conn.recv(4096)
                     print(str(data))
                     if not data:
                         break
-                    # call receive data to update clocks settings with data received
-                    # get rid of b''
+                    # call receive data to update clocks settings with data received, get rid of b''
                     data = str(data)
                     l = len(data) - 1
                     self.receive_data(data[2:l])
-                    # self.conn.sendall(self.data)
+
         
         # close socket if self.running is 0
         self.s.close()
@@ -158,15 +162,14 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
             data_list[3] = 'False'
 
         # Get the brew time
-        brew_time = self.brew_time
         if (len(brew_time) < 8):
-            data_list[4] = brew_time[0]
-            data_list[5] = brew_time[2:4]
-            data_list[6] = brew_time[5:7]
+            data_list[4] = self.brew_time[0]
+            data_list[5] = self.brew_time[2:4]
+            data_list[6] = self.brew_time[5:7]
         else:
-            data_list[4] = brew_time[0:1]
-            data_list[5] = brew_time[3:5]
-            data_list[6] = brew_time[6:8]   
+            data_list[4] = self.brew_time[0:2]
+            data_list[5] = self.brew_time[3:5]
+            data_list[6] = self.brew_time[6:8]   
 
         # Get the brew_set
         if (self.brew_set):
@@ -194,10 +197,9 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         data_list = data.split(',')
  
         # Put togther the alarm time
-        # hour = data_list[0]
-        # hour = hour(2:)
         alarm_time = data_list[0] + ':' + data_list[1] + ' ' + data_list[2]
         self.update_alarm_time(alarm_time)
+        
         # if an alarm is being set, get all the data and set the alarm
         if (data_list[3] == 'True'):
             # if the alarm is already set, update the alarm time
@@ -232,6 +234,22 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.volume = data_list[10]
 
         # Add code to update widgets and not just the text fields
+        # Update the value of the tones combo box
+        index = self.tonesList.findText(self.alarm_tone, QtCore.Qt.MatchFixedString)
+        if index >= 0:
+            self.tonesList.setCurrentIndex(index)
+
+        # Set the volume slider to the new position
+        self.volumeSlider.setValue(int(self.volume))
+
+        # Set the alarm and brew time input fields
+        a_time = QtCore.QDateTime.fromString(alarm_time, 'h:mm A')
+        self.alarmTimeInput.setDateTime(a_time)
+
+        b_time = QtCore.QDateTime.fromString(self.brew_time, 'h:mm A')
+        self.delayTimeInput.setDateTime(b_time)
+
+        # Update the text fields of the gui withnew values
         self.refresh_clockPage()
         self.refresh_settingsPage()
 
