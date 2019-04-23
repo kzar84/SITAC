@@ -1,8 +1,11 @@
 -- Set gpio pin up and default to low
 local status = gpio.LOW
-local pin = 0
-gpio.mode(pin, gpio.OUTPUT)
-gpio.write(pin, status)
+local trigger = 0
+gpio.mode(trigger, gpio.OUTPUT)
+gpio.write(trigger, status)
+--
+local button = 5
+gpio.mode(button, gpio.INT, gpio.PULLUP)
 
 -- Callback that sets the gpio pin high/low
 function set_gpio()
@@ -11,7 +14,7 @@ function set_gpio()
     else
         status = gpio.LOW
     end
-    gpio.write(pin, status) 
+    gpio.write(trigger, status) 
 end
 
 -- Connect to WiFi
@@ -29,7 +32,9 @@ srv = net.createServer(net.TCP, 80)
 srv:listen(80, function(conn)
     -- Calls set_gpio on recieve event
     conn:on("receive", function(sck, data)
-        print("Command: ", data)
+    print("Command: ", data)
         set_gpio()
     end)
 end) 
+
+gpio.trig(button, "up", set_gpio) 
