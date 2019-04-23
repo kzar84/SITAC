@@ -1,0 +1,17 @@
+<resources>
+    <string name="app_name">SITAC</string>
+    <string name="login">LOGIN</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="settings">Settings</string>
+    <string name="brew_time">Brew Time</string>
+    <string name="alarm_time">Alarm Time</string>
+    <string name="lights">Lights</string>
+    <string name="alarm_tone">Alarm Tone</string>
+    <string name="volume">Volume</string>
+    <string name="update">Update</string>
+    <string name="alarm">Alarm</string>
+    <string name="coffee_maker">Coffee Maker</string>
+    <string name="welcome">Welcome</string>
+    <string name="connect">Connect</string>
+</resources>

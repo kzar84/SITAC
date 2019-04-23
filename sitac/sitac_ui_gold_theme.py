@@ -231,7 +231,7 @@ class Ui_MainWindow(object):
         self.alarmTimeLabel.setPalette(palette)
         self.alarmTimeLabel.setObjectName("alarmTimeLabel")
         self.gridLayout_5.addWidget(self.alarmTimeLabel, 1, 0, 1, 2, QtCore.Qt.AlignHCenter|QtCore.Qt.AlignBottom)
-        self.label = QtWidgets.QLabel(self.SettingsPage)
+        self.label = QtWidgets.QLab-el(self.SettingsPage)
         palette = QtGui.QPalette()
         brush = QtGui.QBrush(QtGui.QColor(179, 163, 105))
         brush.setStyle(QtCore.Qt.SolidPattern)

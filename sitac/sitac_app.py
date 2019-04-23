@@ -13,7 +13,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.setupUi(self)
 
         # Server stuff
-        self.running = 0    #not listening
+        self.running = 0
         self.addr = None
         self.conn = None
         
@@ -308,6 +308,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
             self.update_alarm_set()
    
+    # Sets the alarm
     def set_alarm(self, time):
         if (self.alarm_set):
             self.unset_alarm()
@@ -324,20 +325,24 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_set = True        
         self.update_alarm_set()
 
+    # Unsets the alarm
     def unset_alarm(self):
         self.alarm_set = False
         self.update_alarm_set()
 
+    # Sets the brew
     def set_brew(self, brew_time):
         self.brew_set = not self.brew_set
         if self.brew_set:
             self.brew_time = brew_time
         self.update_brew_set()
 
+    # Sets the lights
     def set_lights(self):
         self.lights_set = not self.lights_set
         self.update_lights_set()
     
+    # Updates alarm string and refreshes the gui
     def update_alarm_set(self):
         if (self.alarm_set):
             self.alarm_set_str = 'Alarm: ON'
@@ -348,6 +353,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.refresh_clockPage()   
         self.refresh_settingsPage()
 
+    # Updates brew string and refreshes the gui
     def update_brew_set(self):
         if (self.brew_set):
             self.brew_set_str =  'Brew: ON'
@@ -357,6 +363,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.refresh_clockPage()   
         self.refresh_settingsPage()
 
+    # Updates lights strings and refreshes the gui
     def update_lights_set(self):
         if (self.lights_set): 
             self.lights_set_str = 'Lights: ON'
@@ -439,7 +446,6 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def updateAlarmTone(self):
         self.alarm_tone = self.tonesList.currentText()
 
-
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
         # pad it with a 0 if its length is less than 7
@@ -471,16 +477,18 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
 
 def main():
+    # Start pygame
     pygame.init()
     app = QtWidgets.QApplication(sys.argv)  # A new instance of QApplication
     form = SITAC()
     # set the window to frameless (no title bar), close app using Alt+F4, and hide the cursor                  
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
-    # form.setCursor(QtCore.Qt.BlankCursor)
-    form.show()                         # Show the form in fullscreen
-    sys.exit(app.exec_())               # and execute the app
+    # Show the form in fullscreen without cursor, and execute
+    form.setCursor(QtCore.Qt.BlankCursor)
+    form.showFullScreen()
+    sys.exit(app.exec_())
 
 
-if __name__ == '__main__':              # if we're running file directly and not importing it
+if __name__ == '__main__':
     main()
