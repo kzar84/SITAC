@@ -3,7 +3,7 @@ local status = gpio.LOW
 local trigger = 0
 gpio.mode(trigger, gpio.OUTPUT)
 gpio.write(trigger, status)
---
+
 local button = 5
 gpio.mode(button, gpio.INT, gpio.PULLUP)
 
