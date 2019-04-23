@@ -3,5 +3,6 @@ sudo apt-get upgrade
 sudp apt-get install python
 sudo apt-get install python3
 sudo apt-get install python-pygame
+pip install PyQt5
 sudo apt-get install git
 git clone https://www.github.com/kzar84/SITAC

@@ -17,7 +17,7 @@ end
 -- Connect to WiFi
 print("Connecting to WiFi")
 wifi.setmode(wifi.STATIONAP)
-wifi.sta.config("WestSide", "aNimated_dEcay41")
+wifi.sta.config("iPhone", "sitac2019")
 wifi.sta.connect()
 -- Possibly get rid of this
 wifi.ap.config({ssid="coffee", pwd="pot"})
@@ -25,7 +25,7 @@ print("IP address: ", wifi.sta.getip())
 
 -- Set the server to listen to port 80
 print("Setting up server")
-srv = net.createServer(net.TCP, 30)
+srv = net.createServer(net.TCP, 80)
 srv:listen(80, function(conn)
     -- Calls set_gpio on recieve event
     conn:on("receive", function(sck, data)
