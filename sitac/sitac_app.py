@@ -6,6 +6,19 @@ import pygame
 import sys
 import time
 
+# Button Import + setup
+import RPi.GPIO as GPIO
+
+volumeUpButton = 23
+volumeDownButton = 27
+snoozeButton = 22
+stopButton = 17
+
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(17, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(22, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(23, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(27, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
 class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     def __init__(self):
@@ -13,7 +26,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.setupUi(self)
 
         # Server stuff
-        self.running = 0
+        self.running = 0    #not listening
         self.addr = None
         self.conn = None
         
@@ -34,6 +47,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_on =   False
         self.snoozing =   False
         self.brew_set =   False
+        self.brew_on =    False 
         self.lights_set = False
 
         # alarm time list (initial time 7:00 AM)
@@ -77,7 +91,6 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         # alarm time input
         self.alarmTimeInput.dateTimeChanged.connect(lambda: self.update_alarm_time(self.alarmTimeInput.time().toString('h:mm A')))
 
-
         # start up server thread
         self.startc()
 
@@ -90,7 +103,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
     # server thread
     def socket_thread(self):
-        # Start up a server on port 9999, accept connection from all interfaces
+         # Start up a server on port 9999, accept connection from all interfaces
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         port = 8080
         self.s.bind(('', port))
@@ -108,16 +121,15 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
                     data = self.get_data()
                     self.conn.sendall(data.encode())
                     self.conn.close()
-                else: 
-                    data = self.conn.recv(4096)
+                else:
                     print(str(data))
                     if not data:
                         break
-                    # call receive data to update clocks settings with data received, get rid of b''
+                    # call receive data to update clocks settings with data received
+                    # get rid of b''
                     data = str(data)
                     l = len(data) - 1
                     self.receive_data(data[2:l])
-
         
         # close socket if self.running is 0
         self.s.close()
@@ -162,7 +174,7 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
             data_list[3] = 'False'
 
         # Get the brew time
-        if (len(brew_time) < 8):
+        if (len(self.brew_time) < 8):
             data_list[4] = self.brew_time[0]
             data_list[5] = self.brew_time[2:4]
             data_list[6] = self.brew_time[5:7]
@@ -191,7 +203,8 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
         return data
 
-    # Recieve data from the mobile app
+     # Recieve data from the mobile app
+    
     def receive_data(self, data):
         # Split data string into list (delimit on comma), 11 items
         data_list = data.split(',')
@@ -231,16 +244,13 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_tone = data_list[9]
 
         # set the new volume
-        self.volume = data_list[10]
+        self.updateVolume(int(data_list[10]))
 
         # Add code to update widgets and not just the text fields
         # Update the value of the tones combo box
         index = self.tonesList.findText(self.alarm_tone, QtCore.Qt.MatchFixedString)
         if index >= 0:
             self.tonesList.setCurrentIndex(index)
-
-        # Set the volume slider to the new position
-        self.volumeSlider.setValue(int(self.volume))
 
         # Set the alarm and brew time input fields
         a_time = QtCore.QDateTime.fromString(alarm_time, 'h:mm A')
@@ -256,12 +266,13 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
     # Fucntion that gets the current time every 500ms, checks for an alarm
     def tick(self):
         # get the current local time from the PC
-        self.next_time = time.strftime('%#I:%M %p') # %#I use if for windows, change to %-I when running on linux
+        self.next_time = time.strftime('%-I:%M %p') # %#I use if for windows, change to %-I when running on linux
         
         # if time string has changed, update it
         if self.next_time != self.current_time:
             self.current_time = self.next_time
             self.timeLabel.setText(self.next_time)
+            self.brew_on = False
         
         # check to see if an alarm is ready (time matches, alarm is set, alarm is not currently playing, not currently snoozing)
         if ((self.current_time == self.alarm_times[self.next_alarm_time]) and self.alarm_set and not self.alarm_on and not self.snoozing): 
@@ -272,9 +283,27 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
             self.alarm()
 
         # Check to see if the brew is set
-        if (self.brew_set and self.brew_time == self.current_time):
+        if (self.brew_set and self.brew_time == self.current_time and not self.brew_on ):
             self.brew()
-    
+
+        ### Check all physical buttons ###
+
+        # Check volume up button
+        if (not GPIO.input(volumeUpButton)):
+            self.buttonVolumeUp()
+
+        # Check volume down button
+        if (not GPIO.input(volumeDownButton)):
+            self.buttonVolumeDown()
+
+        # Check alarm off button
+        if ((self.alarm_on or self.snoozing) and not GPIO.input(stopButton)):
+            self.alarm_off()
+
+        # Check alarm snooze button
+        if ((self.alarm_on or self.snoozing) and not GPIO.input(snoozeButton)):
+            self.snooze()
+        
     # Function that changes gui pages
     def goToPage(self, page_name):
         self.pages.setCurrentIndex(self.page_names[page_name])
@@ -308,7 +337,6 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
             self.update_alarm_set()
    
-    # Sets the alarm
     def set_alarm(self, time):
         if (self.alarm_set):
             self.unset_alarm()
@@ -325,24 +353,21 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.alarm_set = True        
         self.update_alarm_set()
 
-    # Unsets the alarm
     def unset_alarm(self):
         self.alarm_set = False
         self.update_alarm_set()
 
-    # Sets the brew
     def set_brew(self, brew_time):
+        self.brew_on = False
         self.brew_set = not self.brew_set
         if self.brew_set:
             self.brew_time = brew_time
         self.update_brew_set()
 
-    # Sets the lights
     def set_lights(self):
         self.lights_set = not self.lights_set
         self.update_lights_set()
     
-    # Updates alarm string and refreshes the gui
     def update_alarm_set(self):
         if (self.alarm_set):
             self.alarm_set_str = 'Alarm: ON'
@@ -353,7 +378,6 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.refresh_clockPage()   
         self.refresh_settingsPage()
 
-    # Updates brew string and refreshes the gui
     def update_brew_set(self):
         if (self.brew_set):
             self.brew_set_str =  'Brew: ON'
@@ -363,7 +387,6 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         self.refresh_clockPage()   
         self.refresh_settingsPage()
 
-    # Updates lights strings and refreshes the gui
     def update_lights_set(self):
         if (self.lights_set): 
             self.lights_set_str = 'Lights: ON'
@@ -379,11 +402,9 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
         pygame.mixer.music.load('../alarm_tones/' + self.alarm_tones_file[self.alarm_tone])
         pygame.mixer.music.set_volume(self.volume/50)
         pygame.mixer.music.play()
-        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%#I:%M %p'))
+        self.wakeUpLabel.setText('Rise and Shine\nThe current time is ' + time.strftime('%-I:%M %p'))
         self.goToPage('AlarmPage')
-        
-        if self.brew_set:
-            self.brew()
+
         if self.lights_set:
             self.lights()
 
@@ -414,37 +435,47 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
     # Toggles coffee brewing
     def brew(self):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.timeout(1)
-            # ip address is local to my network, will have to change when running on gtother
-            # possibly set up esp8266 with host name and connect with that?
-            s.connect(('192.168.1.37', 80))
-            s.sendall(b'toggle')
-            s.close()
-        except:
-            print("Could not connect to device")
+        self.brew_on = True
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('172.20.10.3', 80))
+        s.sendall(b'toggle')
+        s.close()
 
     # Toggles lights
     def lights(self):
-        try:
-            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            s.timeout(1)
-            # ip address is local to my network, will have to change when running on gtother
-            s.connect(('192.168.1.36', 80))
-            s.sendall(b'toggle')
-            s.close()
-        except:
-            print("Could not connect to device")
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect(('172.20.10.2', 80))
+        s.sendall(b'toggle')
+        s.close()
 
     # Change the volume
     def updateVolume(self, v):
         self.volume = v
         self.refresh_settingsPage()
+        self.volumeSlider.setValue(int(self.volume))
 
     # Change the alarm tone
     def updateAlarmTone(self):
         self.alarm_tone = self.tonesList.currentText()
+
+    # Handler for volume down
+
+    def buttonVolumeDown(self):
+        if (self.volume - 5 >= 0):
+            self.volume -= 5
+        else:
+            self.volume = 0
+        self.volumeSlider.setValue(int(self.volume))
+        self.refresh_settingsPage()
+
+    # Handler for volume up
+    def buttonVolumeUp(self):
+        if(self.volume + 5 <= 50):
+            self.volume += 5
+        else:
+            self.volume = 50
+        self.volumeSlider.setValue(int(self.volume))
+        self.refresh_settingsPage()        
 
     # add minutes to a specified time
     def add_minutes(self, stime, minutes):
@@ -473,22 +504,19 @@ class SITAC(QtWidgets.QMainWindow, sitac_ui_gold_theme.Ui_MainWindow):
 
         return stime
 
-        # Connect the buttons  
-
 
 def main():
-    # Start pygame
     pygame.init()
     app = QtWidgets.QApplication(sys.argv)  # A new instance of QApplication
     form = SITAC()
     # set the window to frameless (no title bar), close app using Alt+F4, and hide the cursor                  
     flags = QtCore.Qt.WindowFlags(QtCore.Qt.FramelessWindowHint | QtCore.Qt.WindowCloseButtonHint)
     form.setWindowFlags(flags)
-    # Show the form in fullscreen without cursor, and execute
     form.setCursor(QtCore.Qt.BlankCursor)
     form.showFullScreen()
     sys.exit(app.exec_())
 
-
-if __name__ == '__main__':
+    
+if __name__ == '__main__':              # if we're running file directly and not importing it
     main()
+    GPIO.cleanup()
