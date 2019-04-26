@@ -4,6 +4,7 @@ local trigger = 0
 gpio.mode(trigger, gpio.OUTPUT)
 gpio.write(trigger, status)
 
+-- Set up the button on pin 5 with interupt
 local button = 5
 gpio.mode(button, gpio.INT, gpio.PULLUP)
 
@@ -22,8 +23,6 @@ print("Connecting to WiFi")
 wifi.setmode(wifi.STATIONAP)
 wifi.sta.config("iPhone", "sitac2019")
 wifi.sta.connect()
--- Possibly get rid of this
-wifi.ap.config({ssid="coffee", pwd="pot"})
 print("IP address: ", wifi.sta.getip())
 
 -- Set the server to listen to port 80
@@ -37,4 +36,5 @@ srv:listen(80, function(conn)
     end)
 end) 
 
+-- Attach isr to button
 gpio.trig(button, "up", set_gpio) 
