@@ -1,0 +1,5 @@
+sudo apt-get install qttools5-dev-tools
+sudo apt-get install qttools5-dev
+
+To convert ui file to py file, run pyuic5 <ui file> -o <py file>
+Ex: pyuic5 sitac_ui_gold_theme.py -o sitac_ui_gold_theme.py
